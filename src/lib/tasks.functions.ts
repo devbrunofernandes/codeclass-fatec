@@ -41,7 +41,7 @@ export const createTask = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: row, error } = await supabase.from("tasks").insert({
       classroom_id: data.classroom_id, type: data.type, title: data.title, statement: data.statement,
-      due_at: data.due_at ?? null, created_by: userId, config: data.config as object,
+      due_at: data.due_at ?? null, created_by: userId, config: data.config as never,
     }).select().single();
     if (error) throw new Error(error.message);
     return row;

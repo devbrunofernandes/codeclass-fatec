@@ -90,7 +90,7 @@ Responda em JSON estruturado.`,
 
       // Persist on submission if provided
       if (data.submission_id) {
-        await context.supabase.from("submissions").update({ ai_feedback: out as object }).eq("id", data.submission_id);
+        await context.supabase.from("submissions").update({ ai_feedback: out as never }).eq("id", data.submission_id);
       }
       return out;
     } catch (e) {
