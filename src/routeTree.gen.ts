@@ -9,38 +9,160 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedInvitesTokenRouteImport } from './routes/_authenticated/invites.$token'
+import { Route as AuthenticatedClassroomsIdRouteImport } from './routes/_authenticated/classrooms.$id'
+import { Route as AuthenticatedClassroomsIdTasksNewRouteImport } from './routes/_authenticated/classrooms.$id.tasks.new'
+import { Route as AuthenticatedClassroomsIdTasksTaskIdRouteImport } from './routes/_authenticated/classrooms.$id.tasks.$taskId'
 
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthSignUpRoute = AuthSignUpRouteImport.update({
+  id: '/auth/sign-up',
+  path: '/auth/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthConfirmRoute = AuthConfirmRouteImport.update({
+  id: '/auth/confirm',
+  path: '/auth/confirm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInvitesTokenRoute =
+  AuthenticatedInvitesTokenRouteImport.update({
+    id: '/invites/$token',
+    path: '/invites/$token',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedClassroomsIdRoute =
+  AuthenticatedClassroomsIdRouteImport.update({
+    id: '/classrooms/$id',
+    path: '/classrooms/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedClassroomsIdTasksNewRoute =
+  AuthenticatedClassroomsIdTasksNewRouteImport.update({
+    id: '/tasks/new',
+    path: '/tasks/new',
+    getParentRoute: () => AuthenticatedClassroomsIdRoute,
+  } as any)
+const AuthenticatedClassroomsIdTasksTaskIdRoute =
+  AuthenticatedClassroomsIdTasksTaskIdRouteImport.update({
+    id: '/tasks/$taskId',
+    path: '/tasks/$taskId',
+    getParentRoute: () => AuthenticatedClassroomsIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/auth/confirm': typeof AuthConfirmRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
+  '/classrooms/$id': typeof AuthenticatedClassroomsIdRouteWithChildren
+  '/invites/$token': typeof AuthenticatedInvitesTokenRoute
+  '/classrooms/$id/tasks/$taskId': typeof AuthenticatedClassroomsIdTasksTaskIdRoute
+  '/classrooms/$id/tasks/new': typeof AuthenticatedClassroomsIdTasksNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/auth/confirm': typeof AuthConfirmRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
+  '/classrooms/$id': typeof AuthenticatedClassroomsIdRouteWithChildren
+  '/invites/$token': typeof AuthenticatedInvitesTokenRoute
+  '/classrooms/$id/tasks/$taskId': typeof AuthenticatedClassroomsIdTasksTaskIdRoute
+  '/classrooms/$id/tasks/new': typeof AuthenticatedClassroomsIdTasksNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/auth/confirm': typeof AuthConfirmRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
+  '/_authenticated/classrooms/$id': typeof AuthenticatedClassroomsIdRouteWithChildren
+  '/_authenticated/invites/$token': typeof AuthenticatedInvitesTokenRoute
+  '/_authenticated/classrooms/$id/tasks/$taskId': typeof AuthenticatedClassroomsIdTasksTaskIdRoute
+  '/_authenticated/classrooms/$id/tasks/new': typeof AuthenticatedClassroomsIdTasksNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/auth/confirm'
+    | '/auth/login'
+    | '/auth/sign-up'
+    | '/classrooms/$id'
+    | '/invites/$token'
+    | '/classrooms/$id/tasks/$taskId'
+    | '/classrooms/$id/tasks/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/auth/confirm'
+    | '/auth/login'
+    | '/auth/sign-up'
+    | '/classrooms/$id'
+    | '/invites/$token'
+    | '/classrooms/$id/tasks/$taskId'
+    | '/classrooms/$id/tasks/new'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/_authenticated/dashboard'
+    | '/auth/confirm'
+    | '/auth/login'
+    | '/auth/sign-up'
+    | '/_authenticated/classrooms/$id'
+    | '/_authenticated/invites/$token'
+    | '/_authenticated/classrooms/$id/tasks/$taskId'
+    | '/_authenticated/classrooms/$id/tasks/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthConfirmRoute: typeof AuthConfirmRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthSignUpRoute: typeof AuthSignUpRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +170,105 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/sign-up': {
+      id: '/auth/sign-up'
+      path: '/auth/sign-up'
+      fullPath: '/auth/sign-up'
+      preLoaderRoute: typeof AuthSignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/confirm': {
+      id: '/auth/confirm'
+      path: '/auth/confirm'
+      fullPath: '/auth/confirm'
+      preLoaderRoute: typeof AuthConfirmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/invites/$token': {
+      id: '/_authenticated/invites/$token'
+      path: '/invites/$token'
+      fullPath: '/invites/$token'
+      preLoaderRoute: typeof AuthenticatedInvitesTokenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/classrooms/$id': {
+      id: '/_authenticated/classrooms/$id'
+      path: '/classrooms/$id'
+      fullPath: '/classrooms/$id'
+      preLoaderRoute: typeof AuthenticatedClassroomsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/classrooms/$id/tasks/new': {
+      id: '/_authenticated/classrooms/$id/tasks/new'
+      path: '/tasks/new'
+      fullPath: '/classrooms/$id/tasks/new'
+      preLoaderRoute: typeof AuthenticatedClassroomsIdTasksNewRouteImport
+      parentRoute: typeof AuthenticatedClassroomsIdRoute
+    }
+    '/_authenticated/classrooms/$id/tasks/$taskId': {
+      id: '/_authenticated/classrooms/$id/tasks/$taskId'
+      path: '/tasks/$taskId'
+      fullPath: '/classrooms/$id/tasks/$taskId'
+      preLoaderRoute: typeof AuthenticatedClassroomsIdTasksTaskIdRouteImport
+      parentRoute: typeof AuthenticatedClassroomsIdRoute
+    }
   }
 }
 
+interface AuthenticatedClassroomsIdRouteChildren {
+  AuthenticatedClassroomsIdTasksTaskIdRoute: typeof AuthenticatedClassroomsIdTasksTaskIdRoute
+  AuthenticatedClassroomsIdTasksNewRoute: typeof AuthenticatedClassroomsIdTasksNewRoute
+}
+
+const AuthenticatedClassroomsIdRouteChildren: AuthenticatedClassroomsIdRouteChildren =
+  {
+    AuthenticatedClassroomsIdTasksTaskIdRoute:
+      AuthenticatedClassroomsIdTasksTaskIdRoute,
+    AuthenticatedClassroomsIdTasksNewRoute:
+      AuthenticatedClassroomsIdTasksNewRoute,
+  }
+
+const AuthenticatedClassroomsIdRouteWithChildren =
+  AuthenticatedClassroomsIdRoute._addFileChildren(
+    AuthenticatedClassroomsIdRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedClassroomsIdRoute: typeof AuthenticatedClassroomsIdRouteWithChildren
+  AuthenticatedInvitesTokenRoute: typeof AuthenticatedInvitesTokenRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedClassroomsIdRoute: AuthenticatedClassroomsIdRouteWithChildren,
+  AuthenticatedInvitesTokenRoute: AuthenticatedInvitesTokenRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthConfirmRoute: AuthConfirmRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthSignUpRoute: AuthSignUpRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
