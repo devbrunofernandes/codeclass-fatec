@@ -53,15 +53,22 @@ export const getClassroom = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!classroom) throw new Error("Sala não encontrada");
 
-    const { data: members } = await supabase
+    const { data: membersRaw } = await supabase
       .from("classroom_members")
-      .select("role, user_id, joined_at, profile:profiles(id, full_name, username, email)")
+      .select("role, user_id, joined_at")
       .eq("classroom_id", data.id);
 
-    const my = (members ?? []).find((m) => m.user_id === userId);
+    const userIds = (membersRaw ?? []).map(m => m.user_id);
+    const { data: profiles } = userIds.length
+      ? await supabase.from("profiles").select("id, full_name, username, email").in("id", userIds)
+      : { data: [] as { id: string; full_name: string; username: string; email: string }[] };
+    const pMap = new Map((profiles ?? []).map(p => [p.id, p]));
+
+    const members = (membersRaw ?? []).map(m => ({ ...m, profile: pMap.get(m.user_id) ?? null }));
+    const my = members.find((m) => m.user_id === userId);
     return {
       classroom,
-      members: members ?? [],
+      members,
       my_role: my?.role ?? null,
     };
   });

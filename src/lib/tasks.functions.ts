@@ -77,11 +77,16 @@ export const listSubmissionsForTask = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { data: rows, error } = await context.supabase
       .from("submissions")
-      .select("*, student:profiles(id, full_name, username)")
+      .select("*")
       .eq("task_id", data.task_id)
       .order("submitted_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    const ids = Array.from(new Set((rows ?? []).map(r => r.student_id)));
+    const { data: profiles } = ids.length
+      ? await context.supabase.from("profiles").select("id, full_name, username").in("id", ids)
+      : { data: [] as { id: string; full_name: string; username: string }[] };
+    const pMap = new Map((profiles ?? []).map(p => [p.id, p]));
+    return (rows ?? []).map(r => ({ ...r, student: pMap.get(r.student_id) ?? null }));
   });
 
 const SubmitInput = z.object({

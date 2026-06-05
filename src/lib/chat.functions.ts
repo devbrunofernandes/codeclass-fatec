@@ -8,12 +8,17 @@ export const listMessages = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { data: rows, error } = await context.supabase
       .from("messages")
-      .select("*, sender:profiles(id, full_name, username)")
+      .select("*")
       .eq("classroom_id", data.classroom_id)
       .order("created_at", { ascending: true })
       .limit(200);
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    const ids = Array.from(new Set((rows ?? []).map(r => r.sender_id)));
+    const { data: profiles } = ids.length
+      ? await context.supabase.from("profiles").select("id, full_name, username").in("id", ids)
+      : { data: [] as { id: string; full_name: string; username: string }[] };
+    const pMap = new Map((profiles ?? []).map(p => [p.id, p]));
+    return (rows ?? []).map(r => ({ ...r, sender: pMap.get(r.sender_id) ?? null }));
   });
 
 export const sendMessage = createServerFn({ method: "POST" })
