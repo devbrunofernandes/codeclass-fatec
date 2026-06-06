@@ -70,6 +70,7 @@ function CodingRunner({ task, mySub }: { task: any; mySub: any }) {
   const runFn = useServerFn(runCode);
   const submitFn = useServerFn(submitTask);
   const aiFn = useServerFn(aiReviewCode);
+  const backToClassroom = useBackToClassroom();
 
   const onPaste = () => { toast.warning("Cole detectado — recomendamos digitar o código você mesmo."); };
 
@@ -90,14 +91,9 @@ function CodingRunner({ task, mySub }: { task: any; mySub: any }) {
     try {
       const sub = await submitFn({ data: { task_id: task.id, content: { source: code }, language: lang } });
       toast.success("Tarefa enviada");
-      // Auto-trigger AI feedback
-      setAskingAi(true);
-      try {
-        const fb = await aiFn({ data: { task_statement: task.statement, language: lang, source: code, submission_id: sub.id } });
-        setAiFeedback(fb);
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Falha na IA");
-      } finally { setAskingAi(false); }
+      // Fire-and-forget AI feedback (saved to submission for later viewing)
+      aiFn({ data: { task_statement: task.statement, language: lang, source: code, submission_id: sub.id } }).catch(() => {});
+      backToClassroom();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro");
     } finally { setSubmitting(false); }
