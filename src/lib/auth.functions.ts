@@ -42,21 +42,25 @@ export const signUp = createServerFn({ method: "POST" })
 
     const userId = created.user.id;
 
-    // Profile row
+    // Profile row (active_role = role escolhido no cadastro)
     const { error: profErr } = await supabaseAdmin.from("profiles").insert({
       id: userId,
       full_name: data.full_name,
       username: data.username,
       email: data.email,
       email_confirmed: false,
+      active_role: data.role,
     });
     if (profErr) {
       await supabaseAdmin.auth.admin.deleteUser(userId);
       throw new Error(profErr.message);
     }
 
-    // Role
-    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: data.role });
+    // Concede ambas as funções para permitir alternar entre visões (RF032)
+    await supabaseAdmin.from("user_roles").insert([
+      { user_id: userId, role: "teacher" },
+      { user_id: userId, role: "student" },
+    ]);
 
     // Token
     const token = genToken();
