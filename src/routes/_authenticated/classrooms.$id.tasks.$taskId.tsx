@@ -257,13 +257,14 @@ function QuizRunner({ task, mySub }: { task: any; mySub: any }) {
   const initial = (mySub?.content as { answers?: any[] })?.answers ?? questions.map(() => "");
   const [answers, setAnswers] = useState<any[]>(initial);
   const submitFn = useServerFn(submitTask);
+  const backToClassroom = useBackToClassroom();
   const done = mySub?.status === "submitted" || mySub?.status === "returned";
 
   const submit = async () => {
     try {
       await submitFn({ data: { task_id: task.id, content: { answers } } });
       toast.success("Questionário enviado");
-      window.location.reload();
+      backToClassroom();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Erro"); }
   };
 
