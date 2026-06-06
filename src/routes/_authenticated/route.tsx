@@ -83,8 +83,9 @@ function AuthLayout() {
                 </div>
               )}
             </div>
+            <RoleToggle currentRole={data.role} available={data.available_roles ?? ["student"]} />
             <div className="mx-2 hidden text-sm text-muted-foreground sm:block">
-              {data.profile?.full_name} · <span className="font-medium text-foreground capitalize">{data.role === "teacher" ? "Professor" : "Aluno"}</span>
+              {data.profile?.full_name}
             </div>
             <button onClick={signOut} className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground" title="Sair">
               <LogOut className="h-4 w-4" />
