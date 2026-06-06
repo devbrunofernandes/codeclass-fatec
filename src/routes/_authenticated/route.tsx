@@ -2,10 +2,11 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/
 import { useSuspenseQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { me } from "@/lib/auth.functions";
-import { Code2, LogOut, LayoutDashboard, Bell } from "lucide-react";
+import { me, setActiveRole } from "@/lib/auth.functions";
+import { Code2, LogOut, LayoutDashboard, Bell, GraduationCap, BookOpen, ArrowLeftRight } from "lucide-react";
 import { listNotifications } from "@/lib/notifications.functions";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
