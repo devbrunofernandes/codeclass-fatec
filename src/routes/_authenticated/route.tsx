@@ -2,10 +2,11 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/
 import { useSuspenseQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { me } from "@/lib/auth.functions";
-import { Code2, LogOut, LayoutDashboard, Bell } from "lucide-react";
+import { me, setActiveRole } from "@/lib/auth.functions";
+import { Code2, LogOut, LayoutDashboard, Bell, GraduationCap, BookOpen, ArrowLeftRight } from "lucide-react";
 import { listNotifications } from "@/lib/notifications.functions";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -82,8 +83,9 @@ function AuthLayout() {
                 </div>
               )}
             </div>
+            <RoleToggle currentRole={data.role} available={data.available_roles ?? ["student"]} />
             <div className="mx-2 hidden text-sm text-muted-foreground sm:block">
-              {data.profile?.full_name} · <span className="font-medium text-foreground capitalize">{data.role === "teacher" ? "Professor" : "Aluno"}</span>
+              {data.profile?.full_name}
             </div>
             <button onClick={signOut} className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground" title="Sair">
               <LogOut className="h-4 w-4" />
@@ -95,6 +97,37 @@ function AuthLayout() {
         <Outlet />
       </main>
     </div>
+  );
+}
+
+function RoleToggle({ currentRole, available }: { currentRole: "teacher" | "student"; available: Array<"teacher" | "student"> }) {
+  const qc = useQueryClient();
+  const setRoleFn = useServerFn(setActiveRole);
+  const navigate = useNavigate();
+  const canSwitch = available.includes("teacher") && available.includes("student");
+  const other = currentRole === "teacher" ? "student" : "teacher";
+  const Icon = currentRole === "teacher" ? GraduationCap : BookOpen;
+  const onSwitch = async () => {
+    try {
+      await setRoleFn({ data: { role: other } });
+      await qc.invalidateQueries();
+      toast.success(other === "teacher" ? "Visão de Professor" : "Visão de Aluno");
+      navigate({ to: "/dashboard" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao alternar visão");
+    }
+  };
+  return (
+    <button
+      onClick={onSwitch}
+      disabled={!canSwitch}
+      title={canSwitch ? `Alternar para visão de ${other === "teacher" ? "Professor" : "Aluno"}` : "Função única"}
+      className="ml-1 inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <Icon className="h-3.5 w-3.5 text-primary" />
+      <span className="hidden sm:inline">{currentRole === "teacher" ? "Professor" : "Aluno"}</span>
+      <ArrowLeftRight className="h-3 w-3 text-muted-foreground" />
+    </button>
   );
 }
 
