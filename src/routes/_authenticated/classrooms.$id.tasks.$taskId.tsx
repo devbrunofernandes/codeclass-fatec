@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -13,6 +13,12 @@ export const Route = createFileRoute("/_authenticated/classrooms/$id/tasks/$task
   head: () => ({ meta: [{ title: "Tarefa — CodeClass" }, { name: "description", content: "Realizar ou corrigir uma tarefa." }] }),
   component: TaskPage,
 });
+
+function useBackToClassroom() {
+  const { id } = Route.useParams();
+  const navigate = useNavigate();
+  return () => navigate({ to: "/classrooms/$id", params: { id } });
+}
 
 function TaskPage() {
   const { taskId } = Route.useParams();
