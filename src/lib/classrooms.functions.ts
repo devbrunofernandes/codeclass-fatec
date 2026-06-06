@@ -18,13 +18,28 @@ export const createClassroom = createServerFn({ method: "POST" })
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "teacher").maybeSingle();
     if (!roles) throw new Error("Apenas professores podem criar salas.");
 
-    const { data: created, error } = await supabase
-      .from("classrooms")
-      .insert({ owner_id: userId, name: data.name, subject: data.subject, description: data.description, chat_private: data.chat_private })
-      .select().single();
-    if (error) throw new Error(error.message);
+    const classroomId = crypto.randomUUID();
 
-    await supabase.from("classroom_members").insert({ classroom_id: created.id, user_id: userId, role: "owner" });
+    const { error: createError } = await supabase
+      .from("classrooms")
+      .insert({ id: classroomId, owner_id: userId, name: data.name, subject: data.subject, description: data.description, chat_private: data.chat_private });
+    if (createError) throw new Error(createError.message);
+
+    const { error: membershipError } = await supabase
+      .from("classroom_members")
+      .insert({ classroom_id: classroomId, user_id: userId, role: "owner" });
+    if (membershipError) {
+      await supabase.from("classrooms").delete().eq("id", classroomId);
+      throw new Error(membershipError.message);
+    }
+
+    const { data: created, error: readError } = await supabase
+      .from("classrooms")
+      .select("*")
+      .eq("id", classroomId)
+      .single();
+    if (readError || !created) throw new Error(readError?.message ?? "Sala criada, mas não pôde ser carregada.");
+
     return created;
   });
 
