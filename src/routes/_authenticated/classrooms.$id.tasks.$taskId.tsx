@@ -186,6 +186,7 @@ function TriviaRunner({ task, mySub }: { task: any; mySub: any }) {
   const [timeLeft, setTimeLeft] = useState(questions[order[0]]?.time_limit_sec ?? 30);
   const timerRef = useRef<number | null>(null);
   const submitFn = useServerFn(submitTask);
+  const backToClassroom = useBackToClassroom();
   const done = mySub?.status === "submitted" || mySub?.status === "returned";
 
   useEffect(() => {
