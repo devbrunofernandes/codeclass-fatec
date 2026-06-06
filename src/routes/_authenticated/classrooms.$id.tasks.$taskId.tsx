@@ -214,7 +214,7 @@ function TriviaRunner({ task, mySub }: { task: any; mySub: any }) {
     try {
       await submitFn({ data: { task_id: task.id, content: { answers } } });
       toast.success("Respostas enviadas");
-      window.location.reload();
+      backToClassroom();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Erro"); }
   };
 
