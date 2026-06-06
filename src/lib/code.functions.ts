@@ -4,12 +4,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText, Output } from "ai";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 
-const LANG_MAP: Record<string, { piston: string; version: string }> = {
-  javascript: { piston: "javascript", version: "20.11.1" },
-  python: { piston: "python", version: "3.10.0" },
-  java: { piston: "java", version: "15.0.2" },
-  c: { piston: "c", version: "10.2.0" },
-  cpp: { piston: "c++", version: "10.2.0" },
+const LANG_MAP: Record<string, { compiler: string }> = {
+  javascript: { compiler: "nodejs-20.17.0" },
+  python: { compiler: "cpython-3.14.0" },
+  java: { compiler: "openjdk-jdk-22+36" },
+  c: { compiler: "gcc-13.2.0-c" },
+  cpp: { compiler: "gcc-13.2.0" },
 };
 
 const RunInput = z.object({
@@ -25,32 +25,43 @@ export const runCode = createServerFn({ method: "POST" })
     const lang = LANG_MAP[data.language];
     if (!lang) throw new Error(`Linguagem não suportada: ${data.language}`);
 
-    const res = await fetch("https://emkc.org/api/v2/piston/execute", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        language: lang.piston,
-        version: lang.version,
-        files: [{ name: "main", content: data.source }],
-        stdin: data.stdin,
-        run_timeout: 3000,
-        compile_timeout: 10000,
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    let res: Response;
+    try {
+      res = await fetch("https://wandbox.org/api/compile.json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          compiler: lang.compiler,
+          code: data.source,
+          stdin: data.stdin,
+        }),
+        signal: controller.signal,
+      });
+    } catch (e) {
+      clearTimeout(timeout);
+      const aborted = (e as Error).name === "AbortError";
+      throw new Error(aborted ? "Tempo limite excedido" : `Falha ao contatar o executor: ${(e as Error).message}`);
+    }
+    clearTimeout(timeout);
     if (!res.ok) throw new Error(`Erro no executor (${res.status})`);
     const json = await res.json() as {
-      run: { stdout: string; stderr: string; output: string; code: number; signal: string | null };
-      compile?: { stdout: string; stderr: string; code: number };
+      status: string;
+      signal: string;
+      compiler_error?: string;
+      program_output?: string;
+      program_error?: string;
     };
-    const timedOut = json.run.signal === "SIGKILL" || (json.run.stderr ?? "").includes("timed out");
     return {
-      stdout: json.run.stdout ?? "",
-      stderr: json.run.stderr ?? "",
-      exit_code: json.run.code,
-      compile_stderr: json.compile?.stderr ?? "",
-      timed_out: timedOut,
+      stdout: json.program_output ?? "",
+      stderr: json.program_error ?? "",
+      exit_code: Number(json.status ?? 0),
+      compile_stderr: json.compiler_error ?? "",
+      timed_out: (json.signal ?? "").toLowerCase().includes("kill"),
     };
   });
+
 
 const AiInput = z.object({
   task_statement: z.string(),
