@@ -87,23 +87,31 @@ export const aiReviewCode = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(key);
 
     try {
-      const { experimental_output: out } = await generateText({
+      const { text } = await generateText({
         model: gateway("google/gemini-3-flash-preview"),
-        experimental_output: Output.object({ schema: FeedbackSchema }),
-        system: `Você é um professor de programação experiente. Analise o código do aluno em português, considerando:
-- Corretude em relação ao enunciado
-- Legibilidade e estilo
-- Complexidade (tempo/memória)
-- Possíveis melhorias e otimizações
-Responda em JSON estruturado.`,
+        system: `Você é um professor de programação experiente. Analise o código do aluno em português.
+Responda APENAS com um objeto JSON válido (sem markdown, sem cercas \`\`\`) com exatamente estas chaves:
+{
+  "strengths": string[] (até 8 itens, pontos fortes),
+  "improvements": string[] (até 8 itens, melhorias),
+  "complexity": string (análise de complexidade tempo/memória),
+  "suggestions": string[] (até 8 itens, sugestões/otimizações),
+  "summary": string (resumo geral em 1-3 frases)
+}`,
         prompt: `Enunciado da tarefa:\n${data.task_statement}\n\nLinguagem: ${data.language}\n\nCódigo do aluno:\n\`\`\`${data.language}\n${data.source}\n\`\`\``,
       });
 
-      // Persist on submission if provided
+      const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+      const start = cleaned.indexOf("{");
+      const end = cleaned.lastIndexOf("}");
+      if (start < 0 || end < 0) throw new Error("Resposta inválida da IA");
+      const parsed = FeedbackSchema.parse(JSON.parse(cleaned.slice(start, end + 1)));
+
       if (data.submission_id) {
-        await context.supabase.from("submissions").update({ ai_feedback: out as never }).eq("id", data.submission_id);
+        await context.supabase.from("submissions").update({ ai_feedback: parsed as never }).eq("id", data.submission_id);
       }
-      return out;
+      return parsed;
+
     } catch (e) {
       console.error("AI review failed", e);
       throw new Error("Falha na comunicação com a inteligência artificial. Tente novamente em instantes.");
