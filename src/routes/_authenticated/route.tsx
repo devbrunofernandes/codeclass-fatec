@@ -100,4 +100,35 @@ function AuthLayout() {
   );
 }
 
+function RoleToggle({ currentRole, available }: { currentRole: "teacher" | "student"; available: Array<"teacher" | "student"> }) {
+  const qc = useQueryClient();
+  const setRoleFn = useServerFn(setActiveRole);
+  const navigate = useNavigate();
+  const canSwitch = available.includes("teacher") && available.includes("student");
+  const other = currentRole === "teacher" ? "student" : "teacher";
+  const Icon = currentRole === "teacher" ? GraduationCap : BookOpen;
+  const onSwitch = async () => {
+    try {
+      await setRoleFn({ data: { role: other } });
+      await qc.invalidateQueries();
+      toast.success(other === "teacher" ? "Visão de Professor" : "Visão de Aluno");
+      navigate({ to: "/dashboard" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao alternar visão");
+    }
+  };
+  return (
+    <button
+      onClick={onSwitch}
+      disabled={!canSwitch}
+      title={canSwitch ? `Alternar para visão de ${other === "teacher" ? "Professor" : "Aluno"}` : "Função única"}
+      className="ml-1 inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <Icon className="h-3.5 w-3.5 text-primary" />
+      <span className="hidden sm:inline">{currentRole === "teacher" ? "Professor" : "Aluno"}</span>
+      <ArrowLeftRight className="h-3 w-3 text-muted-foreground" />
+    </button>
+  );
+}
+
 export { meQuery };
