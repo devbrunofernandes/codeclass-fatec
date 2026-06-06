@@ -162,8 +162,27 @@ export const me = createServerFn({ method: "GET" })
       supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
+    const availableRoles = (roles?.map((r) => r.role) ?? []) as Array<"teacher" | "student">;
+    const active = (profile?.active_role ?? availableRoles[0] ?? "student") as "teacher" | "student";
     return {
       profile,
-      role: (roles?.[0]?.role ?? "student") as "teacher" | "student",
+      role: active,
+      available_roles: availableRoles,
     };
   });
+
+const SetActiveRoleInput = z.object({ role: z.enum(["teacher", "student"]) });
+export const setActiveRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => SetActiveRoleInput.parse(i))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    // garante que o usuário possui a role
+    const { data: roleRow } = await supabase
+      .from("user_roles").select("role").eq("user_id", userId).eq("role", data.role).maybeSingle();
+    if (!roleRow) throw new Error("Você não possui essa função");
+    const { error } = await supabase.from("profiles").update({ active_role: data.role }).eq("id", userId);
+    if (error) throw new Error(error.message);
+    return { role: data.role };
+  });
+
