@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -13,6 +13,12 @@ export const Route = createFileRoute("/_authenticated/classrooms/$id/tasks/$task
   head: () => ({ meta: [{ title: "Tarefa — CodeClass" }, { name: "description", content: "Realizar ou corrigir uma tarefa." }] }),
   component: TaskPage,
 });
+
+function useBackToClassroom() {
+  const { id } = Route.useParams();
+  const navigate = useNavigate();
+  return () => navigate({ to: "/classrooms/$id", params: { id } });
+}
 
 function TaskPage() {
   const { taskId } = Route.useParams();
@@ -64,6 +70,7 @@ function CodingRunner({ task, mySub }: { task: any; mySub: any }) {
   const runFn = useServerFn(runCode);
   const submitFn = useServerFn(submitTask);
   const aiFn = useServerFn(aiReviewCode);
+  const backToClassroom = useBackToClassroom();
 
   const onPaste = () => { toast.warning("Cole detectado — recomendamos digitar o código você mesmo."); };
 
@@ -84,14 +91,9 @@ function CodingRunner({ task, mySub }: { task: any; mySub: any }) {
     try {
       const sub = await submitFn({ data: { task_id: task.id, content: { source: code }, language: lang } });
       toast.success("Tarefa enviada");
-      // Auto-trigger AI feedback
-      setAskingAi(true);
-      try {
-        const fb = await aiFn({ data: { task_statement: task.statement, language: lang, source: code, submission_id: sub.id } });
-        setAiFeedback(fb);
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Falha na IA");
-      } finally { setAskingAi(false); }
+      // Fire-and-forget AI feedback (saved to submission for later viewing)
+      aiFn({ data: { task_statement: task.statement, language: lang, source: code, submission_id: sub.id } }).catch(() => {});
+      backToClassroom();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro");
     } finally { setSubmitting(false); }
@@ -184,6 +186,7 @@ function TriviaRunner({ task, mySub }: { task: any; mySub: any }) {
   const [timeLeft, setTimeLeft] = useState(questions[order[0]]?.time_limit_sec ?? 30);
   const timerRef = useRef<number | null>(null);
   const submitFn = useServerFn(submitTask);
+  const backToClassroom = useBackToClassroom();
   const done = mySub?.status === "submitted" || mySub?.status === "returned";
 
   useEffect(() => {
@@ -211,7 +214,7 @@ function TriviaRunner({ task, mySub }: { task: any; mySub: any }) {
     try {
       await submitFn({ data: { task_id: task.id, content: { answers } } });
       toast.success("Respostas enviadas");
-      window.location.reload();
+      backToClassroom();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Erro"); }
   };
 
@@ -254,13 +257,14 @@ function QuizRunner({ task, mySub }: { task: any; mySub: any }) {
   const initial = (mySub?.content as { answers?: any[] })?.answers ?? questions.map(() => "");
   const [answers, setAnswers] = useState<any[]>(initial);
   const submitFn = useServerFn(submitTask);
+  const backToClassroom = useBackToClassroom();
   const done = mySub?.status === "submitted" || mySub?.status === "returned";
 
   const submit = async () => {
     try {
       await submitFn({ data: { task_id: task.id, content: { answers } } });
       toast.success("Questionário enviado");
-      window.location.reload();
+      backToClassroom();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Erro"); }
   };
 
