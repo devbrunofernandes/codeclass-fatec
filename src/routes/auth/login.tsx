@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 import { lookupLoginEmail } from "@/lib/auth.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -38,7 +39,11 @@ function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <form onSubmit={onSubmit} className="w-full max-w-md space-y-4 rounded-xl border bg-card p-8 shadow-sm">
+      <div className="w-full max-w-md space-y-3">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Voltar para o início
+        </Link>
+      <form onSubmit={onSubmit} className="w-full space-y-4 rounded-xl border bg-card p-8 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Entrar</h1>
           <p className="mt-1 text-sm text-muted-foreground">Use seu nome de usuário ou e-mail.</p>
@@ -62,6 +67,7 @@ function LoginPage() {
           Não tem conta? <Link to="/auth/sign-up" className="font-medium text-primary hover:underline">Criar agora</Link>
         </p>
       </form>
+      </div>
     </div>
   );
 }
