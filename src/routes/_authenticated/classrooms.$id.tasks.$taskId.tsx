@@ -349,7 +349,7 @@ function QuizRunner({ task, mySub }: { task: any; mySub: any }) {
 
 /* ---------- TEACHER: SUBMISSIONS REVIEW ---------- */
 
-function TeacherView({ taskId }: { taskId: string }) {
+function TeacherView({ taskId, task }: { taskId: string; task: any }) {
   const fn = useServerFn(listSubmissionsForTask);
   const qc = useQueryClient();
   const { data: subs } = useSuspenseQuery({ queryKey: ["submissions", taskId], queryFn: () => fn({ data: { task_id: taskId } }) });
@@ -373,13 +373,66 @@ function TeacherView({ taskId }: { taskId: string }) {
         </ul>
       </aside>
       <div>
-        {open ? <ReviewPanel sub={open} onSaved={() => qc.invalidateQueries({ queryKey: ["submissions", taskId] })} /> : <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">Selecione uma submissão para corrigir.</div>}
+        {open ? <ReviewPanel sub={open} task={task} onSaved={() => qc.invalidateQueries({ queryKey: ["submissions", taskId] })} /> : <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">Selecione uma submissão para corrigir.</div>}
       </div>
     </div>
   );
 }
 
-function ReviewPanel({ sub, onSaved }: { sub: any; onSaved: () => void }) {
+function QuizReview({ task, answers }: { task: any; answers: any[] }) {
+  const questions = (task.config?.questions ?? []) as Array<any>;
+  return (
+    <div className="space-y-3">
+      {questions.map((q, qi) => {
+        const studentAnswer = answers?.[qi];
+        if (q.kind === "multiple") {
+          const studentIdx = typeof studentAnswer === "number" ? studentAnswer : -1;
+          const isCorrect = studentIdx === q.correct_index;
+          return (
+            <div key={qi} className="rounded-lg border bg-card p-4">
+              <div className="mb-1 text-xs text-muted-foreground">Questão {qi + 1} · Alternativa — {isCorrect ? "✅ Correta" : "❌ Incorreta"}</div>
+              <div className="mb-3 font-medium">{q.prompt}</div>
+              <div className="space-y-1">
+                {q.options.map((opt: string, oi: number) => {
+                  const isStudent = studentIdx === oi;
+                  const isRight = q.correct_index === oi;
+                  const cls = isRight
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : isStudent
+                      ? "border-destructive bg-destructive/10"
+                      : "border-border";
+                  return (
+                    <div key={oi} className={`rounded-md border px-3 py-2 text-sm ${cls}`}>
+                      <span>{opt}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {isStudent && isRight && "(aluno — correta)"}
+                        {isStudent && !isRight && "(resposta do aluno)"}
+                        {!isStudent && isRight && "(resposta correta)"}
+                      </span>
+                    </div>
+                  );
+                })}
+                {studentIdx === -1 && <div className="text-xs text-muted-foreground">Aluno não respondeu.</div>}
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div key={qi} className="rounded-lg border bg-card p-4">
+            <div className="mb-1 text-xs text-muted-foreground">Questão {qi + 1} · Dissertativa</div>
+            <div className="mb-2 font-medium">{q.prompt}</div>
+            <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Resposta do aluno</div>
+            <div className="whitespace-pre-wrap rounded-md border bg-muted p-3 text-sm">
+              {typeof studentAnswer === "string" && studentAnswer.trim() ? studentAnswer : <span className="text-muted-foreground">Sem resposta.</span>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ReviewPanel({ sub, task, onSaved }: { sub: any; task: any; onSaved: () => void }) {
   const fn = useServerFn(returnSubmission);
   const aiFn = useServerFn(aiReviewCode);
   const [grade, setGrade] = useState<string>(sub.grade?.toString() ?? "");
@@ -388,7 +441,8 @@ function ReviewPanel({ sub, onSaved }: { sub: any; onSaved: () => void }) {
   const [askingAi, setAskingAi] = useState(false);
   const [aiFb, setAiFb] = useState<any>(sub.ai_feedback);
 
-  const source = (sub.content as { source?: string; answers?: any })?.source ?? null;
+  const source = (sub.content as { source?: string })?.source ?? null;
+  const answers = (sub.content as { answers?: any[] })?.answers ?? [];
 
   const save = async () => {
     setSaving(true);
@@ -413,11 +467,14 @@ function ReviewPanel({ sub, onSaved }: { sub: any; onSaved: () => void }) {
   return (
     <div className="space-y-4">
       <div className="rounded-lg border bg-card p-4">
-        <div className="mb-2 text-sm font-medium">Resposta de {sub.student?.full_name}</div>
-        {source ? (
+        <div className="mb-3 text-sm font-medium">Resposta de {sub.student?.full_name}</div>
+        {task.type === "coding" && source && (
           <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">{source}</pre>
-        ) : (
-          <pre className="overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify((sub.content as { answers?: unknown })?.answers, null, 2)}</pre>
+        )}
+        {task.type === "quiz" && <QuizReview task={task} answers={answers} />}
+        {task.type === "trivia" && <QuizReview task={task} answers={(answers as number[]).map(a => a)} />}
+        {!source && task.type === "coding" && (
+          <pre className="overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(sub.content, null, 2)}</pre>
         )}
       </div>
 
