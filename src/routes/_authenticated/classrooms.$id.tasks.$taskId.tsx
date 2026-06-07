@@ -182,15 +182,17 @@ function TriviaRunner({ task, mySub }: { task: any; mySub: any }) {
   const questions = (task.config.questions ?? []) as Array<{ prompt: string; options: string[]; correct_index: number; time_limit_sec: number }>;
   const order = useMemo(() => questions.map((_, i) => i).sort(() => Math.random() - 0.5), [questions.length]);
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<number[]>(Array(questions.length).fill(-1));
+  const [answers, setAnswers] = useState<number[]>(
+    ((mySub?.content as { answers?: number[] })?.answers) ?? Array(questions.length).fill(-1),
+  );
   const [timeLeft, setTimeLeft] = useState(questions[order[0]]?.time_limit_sec ?? 30);
   const timerRef = useRef<number | null>(null);
   const submitFn = useServerFn(submitTask);
   const backToClassroom = useBackToClassroom();
-  const done = mySub?.status === "submitted" || mySub?.status === "returned";
+  const [submitted, setSubmitted] = useState<boolean>(mySub?.status === "submitted" || mySub?.status === "returned");
 
   useEffect(() => {
-    if (done || step >= order.length) return;
+    if (submitted || step >= order.length) return;
     setTimeLeft(questions[order[step]].time_limit_sec);
     timerRef.current = window.setInterval(() => {
       setTimeLeft(t => {
@@ -200,7 +202,7 @@ function TriviaRunner({ task, mySub }: { task: any; mySub: any }) {
     }, 1000);
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, done]);
+  }, [step, submitted]);
 
   const choose = (oi: number) => {
     const c = [...answers]; c[order[step]] = oi; setAnswers(c);
@@ -212,17 +214,61 @@ function TriviaRunner({ task, mySub }: { task: any; mySub: any }) {
   };
   const finalize = async () => {
     try {
-      await submitFn({ data: { task_id: task.id, content: { answers } } });
-      toast.success("Respostas enviadas");
-      backToClassroom();
+      const correct = questions.reduce((acc, q, i) => acc + (answers[i] === q.correct_index ? 1 : 0), 0);
+      const grade = Math.round((correct / questions.length) * 100);
+      await submitFn({ data: { task_id: task.id, content: { answers }, grade, auto_return: true } });
+      toast.success(`Respostas enviadas — ${correct}/${questions.length} acertos`);
+      setSubmitted(true);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Erro"); }
   };
 
-  if (done) {
-    const correct = questions.reduce((acc, q, i) => acc + (((mySub?.content as { answers?: number[] })?.answers?.[i] === q.correct_index) ? 1 : 0), 0);
+  if (submitted) {
+    const finalAnswers = answers.length === questions.length
+      ? answers
+      : ((mySub?.content as { answers?: number[] })?.answers ?? answers);
+    const correct = questions.reduce((acc, q, i) => acc + (finalAnswers[i] === q.correct_index ? 1 : 0), 0);
     return (
-      <div className="rounded-lg border bg-card p-6 text-sm">
-        Trivia enviada. Acertos: <strong>{correct} / {questions.length}</strong>
+      <div className="space-y-4">
+        <div className="rounded-lg border bg-card p-6 text-sm">
+          Trivia enviada. Acertos: <strong>{correct} / {questions.length}</strong> ({Math.round((correct / questions.length) * 100)}%)
+        </div>
+        <div className="space-y-3">
+          {questions.map((q, qi) => {
+            const studentIdx = finalAnswers[qi];
+            const isCorrect = studentIdx === q.correct_index;
+            return (
+              <div key={qi} className="rounded-lg border bg-card p-4">
+                <div className="mb-1 text-xs text-muted-foreground">Pergunta {qi + 1} — {isCorrect ? "✅ Correta" : "❌ Incorreta"}</div>
+                <div className="mb-3 font-medium">{q.prompt}</div>
+                <div className="space-y-1">
+                  {q.options.map((opt, oi) => {
+                    const isStudent = studentIdx === oi;
+                    const isRight = q.correct_index === oi;
+                    const cls = isRight
+                      ? "border-emerald-500 bg-emerald-500/10"
+                      : isStudent
+                        ? "border-destructive bg-destructive/10"
+                        : "border-border";
+                    return (
+                      <div key={oi} className={`rounded-md border px-3 py-2 text-sm ${cls}`}>
+                        <span>{opt}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {isStudent && isRight && "(sua resposta — correta)"}
+                          {isStudent && !isRight && "(sua resposta)"}
+                          {!isStudent && isRight && "(resposta correta)"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {studentIdx === -1 && <div className="text-xs text-muted-foreground">Você não respondeu esta pergunta.</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <button onClick={backToClassroom} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+          Voltar para a sala
+        </button>
       </div>
     );
   }
