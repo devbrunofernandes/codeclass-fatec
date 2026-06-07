@@ -67,6 +67,7 @@ function LoginPage() {
           Não tem conta? <Link to="/auth/sign-up" className="font-medium text-primary hover:underline">Criar agora</Link>
         </p>
       </form>
+      </div>
     </div>
   );
 }
