@@ -47,10 +47,14 @@ export const listMyClassrooms = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const { data: profile } = await supabase.from("profiles").select("active_role").eq("id", userId).maybeSingle();
+    const active = (profile?.active_role ?? "student") as "teacher" | "student";
+    const allowedRoles = active === "teacher" ? ["owner", "collaborator"] : ["student"];
     const { data: memberships, error } = await supabase
       .from("classroom_members")
       .select("role, classroom:classrooms(*)")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .in("role", allowedRoles);
     if (error) throw new Error(error.message);
     return (memberships ?? [])
       .map((m) => ({ ...m.classroom!, my_role: m.role }))
