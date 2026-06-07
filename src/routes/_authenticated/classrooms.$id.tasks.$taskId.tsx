@@ -41,7 +41,7 @@ function TaskPage() {
       </div>
 
       {isTeacher ? (
-        <TeacherView taskId={taskId} />
+        <TeacherView taskId={taskId} task={task} />
       ) : task.type === "coding" ? (
         <CodingRunner task={task} mySub={data.my_submission} />
       ) : task.type === "trivia" ? (
