@@ -93,6 +93,8 @@ const SubmitInput = z.object({
   task_id: z.string().uuid(),
   content: z.any(),
   language: z.string().optional(),
+  grade: z.number().min(0).max(100).optional(),
+  auto_return: z.boolean().optional(),
 });
 
 export const submitTask = createServerFn({ method: "POST" })
@@ -100,17 +102,23 @@ export const submitTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => SubmitInput.parse(i))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const extra: Record<string, unknown> = {};
+    if (data.auto_return) {
+      extra.status = "returned";
+      extra.returned_at = new Date().toISOString();
+      if (data.grade != null) extra.grade = data.grade;
+    }
     const { data: existing } = await supabase.from("submissions").select("id,status").eq("task_id", data.task_id).eq("student_id", userId).maybeSingle();
     if (existing) {
       if (existing.status === "returned") throw new Error("Tarefa já corrigida.");
       const { data: up, error } = await supabase.from("submissions").update({
-        content: data.content, language: data.language, submitted_at: new Date().toISOString(),
+        content: data.content, language: data.language, submitted_at: new Date().toISOString(), ...extra,
       }).eq("id", existing.id).select().single();
       if (error) throw new Error(error.message);
       return up;
     } else {
       const { data: ins, error } = await supabase.from("submissions").insert({
-        task_id: data.task_id, student_id: userId, content: data.content, language: data.language,
+        task_id: data.task_id, student_id: userId, content: data.content, language: data.language, ...extra,
       }).select().single();
       if (error) throw new Error(error.message);
       return ins;
