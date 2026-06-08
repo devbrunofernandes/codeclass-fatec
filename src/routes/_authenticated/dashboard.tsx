@@ -5,8 +5,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { me } from "@/lib/auth.functions";
 import { listMyClassrooms, createClassroom } from "@/lib/classrooms.functions";
-import { pendingTasksForMe } from "@/lib/tasks.functions";
-import { Plus, BookOpen, Clock } from "lucide-react";
+import { pendingTasksForMe, myReturnedSubmissions } from "@/lib/tasks.functions";
+import { Plus, BookOpen, Clock, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Painel — CodeClass" }, { name: "description", content: "Suas salas e tarefas." }] }),
