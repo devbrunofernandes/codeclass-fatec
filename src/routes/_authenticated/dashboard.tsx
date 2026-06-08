@@ -96,7 +96,7 @@ function StudentDashboard() {
         ) : (
           <div className="space-y-2">
             {returned.map(s => (
-              <Link key={s.id} to="/classrooms/$id/tasks/$taskId" params={{ id: s.task!.classroom_id, taskId: s.task!.id }}
+              <Link key={s.id} to="/tasks/$taskId" params={{ taskId: s.task!.id }}
                 className="flex items-center justify-between rounded-lg border bg-card p-4 hover:bg-accent">
                 <div>
                   <div className="font-medium text-foreground">{s.task?.title}</div>
