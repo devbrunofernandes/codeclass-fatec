@@ -432,6 +432,46 @@ function QuizReview({ task, answers }: { task: any; answers: any[] }) {
   );
 }
 
+function TriviaReview({ task, answers }: { task: any; answers: number[] }) {
+  const questions = (task.config?.questions ?? []) as Array<{ prompt: string; options: string[]; correct_index: number }>;
+  return (
+    <div className="space-y-3">
+      {questions.map((q, qi) => {
+        const raw = answers?.[qi];
+        const studentIdx = typeof raw === "number" ? raw : -1;
+        const isCorrect = studentIdx === q.correct_index;
+        return (
+          <div key={qi} className="rounded-lg border bg-card p-4">
+            <div className="mb-1 text-xs text-muted-foreground">Pergunta {qi + 1} — {studentIdx === -1 ? "Sem resposta" : isCorrect ? "✅ Correta" : "❌ Incorreta"}</div>
+            <div className="mb-3 font-medium">{q.prompt}</div>
+            <div className="space-y-1">
+              {q.options.map((opt, oi) => {
+                const isStudent = studentIdx === oi;
+                const isRight = q.correct_index === oi;
+                const cls = isRight
+                  ? "border-emerald-500 bg-emerald-500/10"
+                  : isStudent
+                    ? "border-destructive bg-destructive/10"
+                    : "border-border";
+                return (
+                  <div key={oi} className={`rounded-md border px-3 py-2 text-sm ${cls}`}>
+                    <span>{opt}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {isStudent && isRight && "(aluno — correta)"}
+                      {isStudent && !isRight && "(resposta do aluno)"}
+                      {!isStudent && isRight && "(resposta correta)"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ReviewPanel({ sub, task, onSaved }: { sub: any; task: any; onSaved: () => void }) {
   const fn = useServerFn(returnSubmission);
   const aiFn = useServerFn(aiReviewCode);
@@ -472,7 +512,7 @@ function ReviewPanel({ sub, task, onSaved }: { sub: any; task: any; onSaved: () 
           <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">{source}</pre>
         )}
         {task.type === "quiz" && <QuizReview task={task} answers={answers} />}
-        {task.type === "trivia" && <QuizReview task={task} answers={(answers as number[]).map(a => a)} />}
+        {task.type === "trivia" && <TriviaReview task={task} answers={answers as number[]} />}
         {!source && task.type === "coding" && (
           <pre className="overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(sub.content, null, 2)}</pre>
         )}
