@@ -177,6 +177,20 @@ export const pendingTasksForMe = createServerFn({ method: "GET" })
     const taskIds = (tasks ?? []).map(t => t.id);
     if (taskIds.length === 0) return [];
     const { data: subs } = await supabase.from("submissions").select("task_id,status").in("task_id", taskIds).eq("student_id", userId);
-    const doneMap = new Map((subs ?? []).map(s => [s.task_id, s.status]));
-    return (tasks ?? []).filter(t => doneMap.get(t.id) !== "returned").map(t => ({ ...t, my_status: doneMap.get(t.id) ?? "pending" }));
+    const subMap = new Map((subs ?? []).map(s => [s.task_id, s.status]));
+    return (tasks ?? []).filter(t => !subMap.has(t.id)).map(t => ({ ...t, my_status: "pending" as const }));
+  });
+
+export const myReturnedSubmissions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("submissions")
+      .select("*, task:tasks(id,title,type,classroom_id,classroom:classrooms(id,name))")
+      .eq("student_id", userId)
+      .eq("status", "returned")
+      .order("returned_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
   });
