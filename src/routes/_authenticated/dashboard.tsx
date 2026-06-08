@@ -54,8 +54,10 @@ function TeacherDashboard() {
 function StudentDashboard() {
   const listFn = useServerFn(listMyClassrooms);
   const pendingFn = useServerFn(pendingTasksForMe);
+  const returnedFn = useServerFn(myReturnedSubmissions);
   const { data: classes } = useSuspenseQuery({ queryKey: ["classrooms"], queryFn: () => listFn() });
   const { data: pending } = useSuspenseQuery({ queryKey: ["pending-tasks"], queryFn: () => pendingFn() });
+  const { data: returned } = useSuspenseQuery({ queryKey: ["returned-submissions"], queryFn: () => returnedFn() });
 
   return (
     <div className="space-y-8">
@@ -77,6 +79,38 @@ function StudentDashboard() {
                 </div>
                 <div className="text-right text-xs text-muted-foreground">
                   {t.due_at ? <>Entrega: <span className="font-medium text-foreground">{new Date(t.due_at).toLocaleString("pt-BR")}</span></> : "Sem prazo"}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <div className="mb-3 flex items-center gap-2">
+          <CheckCircle2 className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-bold text-foreground">Correções recebidas</h2>
+        </div>
+        {returned.length === 0 ? (
+          <EmptyState title="Nenhuma correção ainda" body="Quando o professor devolver uma tarefa corrigida, ela aparecerá aqui." />
+        ) : (
+          <div className="space-y-2">
+            {returned.map(s => (
+              <Link key={s.id} to="/classrooms/$id/tasks/$taskId" params={{ id: s.task!.classroom_id, taskId: s.task!.id }}
+                className="flex items-center justify-between rounded-lg border bg-card p-4 hover:bg-accent">
+                <div>
+                  <div className="font-medium text-foreground">{s.task?.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {s.task?.classroom?.name} · {s.task?.type}
+                    {s.returned_at && <> · Corrigida em {new Date(s.returned_at).toLocaleDateString("pt-BR")}</>}
+                  </div>
+                </div>
+                <div className="text-right">
+                  {s.grade != null ? (
+                    <div className="text-lg font-semibold text-foreground">{s.grade}<span className="text-xs text-muted-foreground">/100</span></div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">Sem nota</div>
+                  )}
                 </div>
               </Link>
             ))}
