@@ -71,7 +71,7 @@ function StudentDashboard() {
         ) : (
           <div className="space-y-2">
             {pending.map(t => (
-              <Link key={t.id} to="/classrooms/$id/tasks/$taskId" params={{ id: t.classroom_id, taskId: t.id }}
+              <Link key={t.id} to="/tasks/$taskId" params={{ taskId: t.id }}
                 className="flex items-center justify-between rounded-lg border bg-card p-4 hover:bg-accent">
                 <div>
                   <div className="font-medium text-foreground">{t.title}</div>
