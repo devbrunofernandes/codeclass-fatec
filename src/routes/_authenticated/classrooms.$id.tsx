@@ -91,7 +91,7 @@ function TasksTab({ classroomId, isTeacher }: { classroomId: string; isTeacher: 
         <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">Nenhuma tarefa ainda.</div>
       ) : (
         tasks.map(t => (
-          <Link key={t.id} to="/classrooms/$id/tasks/$taskId" params={{ id: classroomId, taskId: t.id }}
+          <Link key={t.id} to="/tasks/$taskId" params={{ taskId: t.id }}
             className="block rounded-lg border bg-card p-4 hover:border-primary/40">
             <div className="flex items-center justify-between">
               <div>
