@@ -154,7 +154,7 @@ export const returnSubmission = createServerFn({ method: "POST" })
       type: "submission_returned",
       title: `Devolutiva: ${sub.task!.title}`,
       body: data.grade != null ? `Nota: ${data.grade}` : "Sua tarefa foi corrigida.",
-      link: `/classrooms/${sub.task!.classroom_id}/tasks/${sub.task!.id}`,
+      link: `/tasks/${sub.task!.id}`,
     });
     return { ok: true };
   });

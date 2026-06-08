@@ -1,23 +1,22 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import Editor from "@monaco-editor/react";
-import { getTask, submitTask, listSubmissionsForTask, returnSubmission } from "@/lib/tasks.functions";
+import { getTask, submitTask, listSubmissionsForTask } from "@/lib/tasks.functions";
 import { runCode, aiReviewCode } from "@/lib/code.functions";
 import { me } from "@/lib/auth.functions";
-import { Play, Send, Sparkles } from "lucide-react";
+import { Play, Send, Sparkles, ArrowLeft } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/classrooms/$id/tasks/$taskId")({
-  head: () => ({ meta: [{ title: "Tarefa — CodeClass" }, { name: "description", content: "Realizar ou corrigir uma tarefa." }] }),
+export const Route = createFileRoute("/_authenticated/tasks/$taskId")({
+  head: () => ({ meta: [{ title: "Tarefa — CodeClass" }, { name: "description", content: "Realizar uma tarefa." }] }),
   component: TaskPage,
 });
 
-function useBackToClassroom() {
-  const { id } = Route.useParams();
+function useBackToClassroom(classroomId: string) {
   const navigate = useNavigate();
-  return () => navigate({ to: "/classrooms/$id", params: { id } });
+  return () => navigate({ to: "/classrooms/$id", params: { id: classroomId } });
 }
 
 function TaskPage() {
@@ -31,6 +30,9 @@ function TaskPage() {
 
   return (
     <div className="space-y-4">
+      <Link to="/classrooms/$id" params={{ id: task.classroom_id }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> Voltar para a sala
+      </Link>
       <div className="rounded-xl border bg-card p-6">
         <div className="text-xs uppercase tracking-wide text-muted-foreground">
           {task.type === "coding" ? "Codificação" : task.type === "trivia" ? "Trivia" : "Questionário"}
@@ -41,7 +43,7 @@ function TaskPage() {
       </div>
 
       {isTeacher ? (
-        <TeacherView taskId={taskId} task={task} />
+        <TeacherView taskId={taskId} classroomId={task.classroom_id} />
       ) : task.type === "coding" ? (
         <CodingRunner task={task} mySub={data.my_submission} />
       ) : task.type === "trivia" ? (
@@ -70,7 +72,7 @@ function CodingRunner({ task, mySub }: { task: any; mySub: any }) {
   const runFn = useServerFn(runCode);
   const submitFn = useServerFn(submitTask);
   const aiFn = useServerFn(aiReviewCode);
-  const backToClassroom = useBackToClassroom();
+  const backToClassroom = useBackToClassroom(task.classroom_id);
 
   const onPaste = () => { toast.warning("Cole detectado — recomendamos digitar o código você mesmo."); };
 
@@ -91,7 +93,6 @@ function CodingRunner({ task, mySub }: { task: any; mySub: any }) {
     try {
       const sub = await submitFn({ data: { task_id: task.id, content: { source: code }, language: lang } });
       toast.success("Tarefa enviada");
-      // Fire-and-forget AI feedback (saved to submission for later viewing)
       aiFn({ data: { task_statement: task.statement, language: lang, source: code, submission_id: sub.id } }).catch(() => {});
       backToClassroom();
     } catch (e) {
@@ -188,7 +189,7 @@ function TriviaRunner({ task, mySub }: { task: any; mySub: any }) {
   const [timeLeft, setTimeLeft] = useState(questions[order[0]]?.time_limit_sec ?? 30);
   const timerRef = useRef<number | null>(null);
   const submitFn = useServerFn(submitTask);
-  const backToClassroom = useBackToClassroom();
+  const backToClassroom = useBackToClassroom(task.classroom_id);
   const [submitted, setSubmitted] = useState<boolean>(mySub?.status === "submitted" || mySub?.status === "returned");
 
   useEffect(() => {
@@ -303,7 +304,7 @@ function QuizRunner({ task, mySub }: { task: any; mySub: any }) {
   const initial = (mySub?.content as { answers?: any[] })?.answers ?? questions.map(() => "");
   const [answers, setAnswers] = useState<any[]>(initial);
   const submitFn = useServerFn(submitTask);
-  const backToClassroom = useBackToClassroom();
+  const backToClassroom = useBackToClassroom(task.classroom_id);
   const done = mySub?.status === "submitted" || mySub?.status === "returned";
 
   const submit = async () => {
@@ -347,199 +348,35 @@ function QuizRunner({ task, mySub }: { task: any; mySub: any }) {
   );
 }
 
-/* ---------- TEACHER: SUBMISSIONS REVIEW ---------- */
+/* ---------- TEACHER: SUBMISSIONS LIST ---------- */
 
-function TeacherView({ taskId, task }: { taskId: string; task: any }) {
+function TeacherView({ taskId, classroomId }: { taskId: string; classroomId: string }) {
   const fn = useServerFn(listSubmissionsForTask);
-  const qc = useQueryClient();
   const { data: subs } = useSuspenseQuery({ queryKey: ["submissions", taskId], queryFn: () => fn({ data: { task_id: taskId } }) });
-  const [openId, setOpenId] = useState<string | null>(null);
-  const open = subs.find(s => s.id === openId);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
-      <aside className="rounded-lg border bg-card">
-        <div className="border-b p-3 text-sm font-medium">Submissões ({subs.length})</div>
-        <ul className="divide-y">
-          {subs.length === 0 && <li className="p-4 text-sm text-muted-foreground">Nenhuma submissão ainda.</li>}
-          {subs.map(s => (
-            <li key={s.id}>
-              <button onClick={() => setOpenId(s.id)} className={`block w-full p-3 text-left hover:bg-accent ${openId === s.id ? "bg-accent" : ""}`}>
+    <div className="rounded-lg border bg-card">
+      <div className="border-b p-3 text-sm font-medium">Submissões ({subs.length})</div>
+      <ul className="divide-y">
+        {subs.length === 0 && <li className="p-4 text-sm text-muted-foreground">Nenhuma submissão ainda.</li>}
+        {subs.map(s => (
+          <li key={s.id}>
+            <Link
+              to="/tasks/$taskId/submissions/$submissionId"
+              params={{ taskId, submissionId: s.id }}
+              className="flex items-center justify-between p-4 hover:bg-accent"
+            >
+              <div>
                 <div className="font-medium text-foreground">{s.student?.full_name}</div>
                 <div className="text-xs text-muted-foreground">{new Date(s.submitted_at).toLocaleString("pt-BR")} · {s.status === "returned" ? `Nota ${s.grade ?? "—"}` : "pendente"}</div>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </aside>
-      <div>
-        {open ? <ReviewPanel sub={open} task={task} onSaved={() => qc.invalidateQueries({ queryKey: ["submissions", taskId] })} /> : <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">Selecione uma submissão para corrigir.</div>}
-      </div>
-    </div>
-  );
-}
-
-function QuizReview({ task, answers }: { task: any; answers: any[] }) {
-  const questions = (task.config?.questions ?? []) as Array<any>;
-  return (
-    <div className="space-y-3">
-      {questions.map((q, qi) => {
-        const studentAnswer = answers?.[qi];
-        if (q.kind === "multiple") {
-          const studentIdx = typeof studentAnswer === "number" ? studentAnswer : -1;
-          const isCorrect = studentIdx === q.correct_index;
-          return (
-            <div key={qi} className="rounded-lg border bg-card p-4">
-              <div className="mb-1 text-xs text-muted-foreground">Questão {qi + 1} · Alternativa — {isCorrect ? "✅ Correta" : "❌ Incorreta"}</div>
-              <div className="mb-3 font-medium">{q.prompt}</div>
-              <div className="space-y-1">
-                {q.options.map((opt: string, oi: number) => {
-                  const isStudent = studentIdx === oi;
-                  const isRight = q.correct_index === oi;
-                  const cls = isRight
-                    ? "border-emerald-500 bg-emerald-500/10"
-                    : isStudent
-                      ? "border-destructive bg-destructive/10"
-                      : "border-border";
-                  return (
-                    <div key={oi} className={`rounded-md border px-3 py-2 text-sm ${cls}`}>
-                      <span>{opt}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {isStudent && isRight && "(aluno — correta)"}
-                        {isStudent && !isRight && "(resposta do aluno)"}
-                        {!isStudent && isRight && "(resposta correta)"}
-                      </span>
-                    </div>
-                  );
-                })}
-                {studentIdx === -1 && <div className="text-xs text-muted-foreground">Aluno não respondeu.</div>}
               </div>
-            </div>
-          );
-        }
-        return (
-          <div key={qi} className="rounded-lg border bg-card p-4">
-            <div className="mb-1 text-xs text-muted-foreground">Questão {qi + 1} · Dissertativa</div>
-            <div className="mb-2 font-medium">{q.prompt}</div>
-            <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Resposta do aluno</div>
-            <div className="whitespace-pre-wrap rounded-md border bg-muted p-3 text-sm">
-              {typeof studentAnswer === "string" && studentAnswer.trim() ? studentAnswer : <span className="text-muted-foreground">Sem resposta.</span>}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function TriviaReview({ task, answers }: { task: any; answers: number[] }) {
-  const questions = (task.config?.questions ?? []) as Array<{ prompt: string; options: string[]; correct_index: number }>;
-  return (
-    <div className="space-y-3">
-      {questions.map((q, qi) => {
-        const raw = answers?.[qi];
-        const studentIdx = typeof raw === "number" ? raw : -1;
-        const isCorrect = studentIdx === q.correct_index;
-        return (
-          <div key={qi} className="rounded-lg border bg-card p-4">
-            <div className="mb-1 text-xs text-muted-foreground">Pergunta {qi + 1} — {studentIdx === -1 ? "Sem resposta" : isCorrect ? "✅ Correta" : "❌ Incorreta"}</div>
-            <div className="mb-3 font-medium">{q.prompt}</div>
-            <div className="space-y-1">
-              {q.options.map((opt, oi) => {
-                const isStudent = studentIdx === oi;
-                const isRight = q.correct_index === oi;
-                const cls = isRight
-                  ? "border-emerald-500 bg-emerald-500/10"
-                  : isStudent
-                    ? "border-destructive bg-destructive/10"
-                    : "border-border";
-                return (
-                  <div key={oi} className={`rounded-md border px-3 py-2 text-sm ${cls}`}>
-                    <span>{opt}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {isStudent && isRight && "(aluno — correta)"}
-                      {isStudent && !isRight && "(resposta do aluno)"}
-                      {!isStudent && isRight && "(resposta correta)"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function ReviewPanel({ sub, task, onSaved }: { sub: any; task: any; onSaved: () => void }) {
-  const fn = useServerFn(returnSubmission);
-  const aiFn = useServerFn(aiReviewCode);
-  const [grade, setGrade] = useState<string>(sub.grade?.toString() ?? "");
-  const [feedback, setFeedback] = useState(sub.teacher_feedback ?? "");
-  const [saving, setSaving] = useState(false);
-  const [askingAi, setAskingAi] = useState(false);
-  const [aiFb, setAiFb] = useState<any>(sub.ai_feedback);
-
-  const source = (sub.content as { source?: string })?.source ?? null;
-  const answers = (sub.content as { answers?: any[] })?.answers ?? [];
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      await fn({ data: { submission_id: sub.id, grade: grade === "" ? null : Number(grade), feedback } });
-      toast.success("Devolutiva enviada");
-      onSaved();
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Erro"); }
-    finally { setSaving(false); }
-  };
-
-  const askAi = async () => {
-    if (!source) { toast.error("Sem código para analisar"); return; }
-    setAskingAi(true);
-    try {
-      const fb = await aiFn({ data: { task_statement: "", language: sub.language ?? "javascript", source, submission_id: sub.id } });
-      setAiFb(fb);
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Erro"); }
-    finally { setAskingAi(false); }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-lg border bg-card p-4">
-        <div className="mb-3 text-sm font-medium">Resposta de {sub.student?.full_name}</div>
-        {task.type === "coding" && source && (
-          <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">{source}</pre>
-        )}
-        {task.type === "quiz" && <QuizReview task={task} answers={answers} />}
-        {task.type === "trivia" && <TriviaReview task={task} answers={answers as number[]} />}
-        {!source && task.type === "coding" && (
-          <pre className="overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(sub.content, null, 2)}</pre>
-        )}
-      </div>
-
-      {source && (
-        <div className="rounded-lg border bg-card p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium"><Sparkles className="h-4 w-4 text-primary" /> Análise da IA</div>
-            <button onClick={askAi} disabled={askingAi} className="rounded-md border px-2 py-1 text-xs hover:bg-accent">{askingAi ? "Analisando..." : "Rodar IA"}</button>
-          </div>
-          {aiFb && <div className="mt-2"><AiFeedback fb={aiFb} /></div>}
-        </div>
-      )}
-
-      <div className="rounded-lg border bg-card p-4 space-y-3">
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium">Nota (0-100, opcional)</span>
-          <input type="number" min={0} max={100} value={grade} onChange={(e) => setGrade(e.target.value)} className="rounded-md border bg-background px-3 py-2 text-sm" />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium">Comentário</span>
-          <textarea required value={feedback} onChange={(e) => setFeedback(e.target.value)} rows={5} className="w-full rounded-md border bg-background px-3 py-2 text-sm" />
-        </label>
-        <button onClick={save} disabled={saving} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
-          {saving ? "Enviando..." : "Enviar devolutiva"}
-        </button>
+              <span className="text-xs text-primary">Abrir correção →</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <div className="border-t p-3">
+        <Link to="/classrooms/$id" params={{ id: classroomId }} className="text-sm text-muted-foreground hover:text-foreground">← Voltar para a sala</Link>
       </div>
     </div>
   );

@@ -15,10 +15,11 @@ import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedTasksTaskIdRouteImport } from './routes/_authenticated/tasks.$taskId'
 import { Route as AuthenticatedInvitesTokenRouteImport } from './routes/_authenticated/invites.$token'
 import { Route as AuthenticatedClassroomsIdRouteImport } from './routes/_authenticated/classrooms.$id'
+import { Route as AuthenticatedTasksTaskIdSubmissionsSubmissionIdRouteImport } from './routes/_authenticated/tasks.$taskId.submissions.$submissionId'
 import { Route as AuthenticatedClassroomsIdTasksNewRouteImport } from './routes/_authenticated/classrooms.$id.tasks.new'
-import { Route as AuthenticatedClassroomsIdTasksTaskIdRouteImport } from './routes/_authenticated/classrooms.$id.tasks.$taskId'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -49,6 +50,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTasksTaskIdRoute =
+  AuthenticatedTasksTaskIdRouteImport.update({
+    id: '/tasks/$taskId',
+    path: '/tasks/$taskId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInvitesTokenRoute =
   AuthenticatedInvitesTokenRouteImport.update({
     id: '/invites/$token',
@@ -61,16 +68,16 @@ const AuthenticatedClassroomsIdRoute =
     path: '/classrooms/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute =
+  AuthenticatedTasksTaskIdSubmissionsSubmissionIdRouteImport.update({
+    id: '/submissions/$submissionId',
+    path: '/submissions/$submissionId',
+    getParentRoute: () => AuthenticatedTasksTaskIdRoute,
+  } as any)
 const AuthenticatedClassroomsIdTasksNewRoute =
   AuthenticatedClassroomsIdTasksNewRouteImport.update({
     id: '/tasks/new',
     path: '/tasks/new',
-    getParentRoute: () => AuthenticatedClassroomsIdRoute,
-  } as any)
-const AuthenticatedClassroomsIdTasksTaskIdRoute =
-  AuthenticatedClassroomsIdTasksTaskIdRouteImport.update({
-    id: '/tasks/$taskId',
-    path: '/tasks/$taskId',
     getParentRoute: () => AuthenticatedClassroomsIdRoute,
   } as any)
 
@@ -82,8 +89,9 @@ export interface FileRoutesByFullPath {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/classrooms/$id': typeof AuthenticatedClassroomsIdRouteWithChildren
   '/invites/$token': typeof AuthenticatedInvitesTokenRoute
-  '/classrooms/$id/tasks/$taskId': typeof AuthenticatedClassroomsIdTasksTaskIdRoute
+  '/tasks/$taskId': typeof AuthenticatedTasksTaskIdRouteWithChildren
   '/classrooms/$id/tasks/new': typeof AuthenticatedClassroomsIdTasksNewRoute
+  '/tasks/$taskId/submissions/$submissionId': typeof AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,8 +101,9 @@ export interface FileRoutesByTo {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/classrooms/$id': typeof AuthenticatedClassroomsIdRouteWithChildren
   '/invites/$token': typeof AuthenticatedInvitesTokenRoute
-  '/classrooms/$id/tasks/$taskId': typeof AuthenticatedClassroomsIdTasksTaskIdRoute
+  '/tasks/$taskId': typeof AuthenticatedTasksTaskIdRouteWithChildren
   '/classrooms/$id/tasks/new': typeof AuthenticatedClassroomsIdTasksNewRoute
+  '/tasks/$taskId/submissions/$submissionId': typeof AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,8 +115,9 @@ export interface FileRoutesById {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/_authenticated/classrooms/$id': typeof AuthenticatedClassroomsIdRouteWithChildren
   '/_authenticated/invites/$token': typeof AuthenticatedInvitesTokenRoute
-  '/_authenticated/classrooms/$id/tasks/$taskId': typeof AuthenticatedClassroomsIdTasksTaskIdRoute
+  '/_authenticated/tasks/$taskId': typeof AuthenticatedTasksTaskIdRouteWithChildren
   '/_authenticated/classrooms/$id/tasks/new': typeof AuthenticatedClassroomsIdTasksNewRoute
+  '/_authenticated/tasks/$taskId/submissions/$submissionId': typeof AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,8 +129,9 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/classrooms/$id'
     | '/invites/$token'
-    | '/classrooms/$id/tasks/$taskId'
+    | '/tasks/$taskId'
     | '/classrooms/$id/tasks/new'
+    | '/tasks/$taskId/submissions/$submissionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -130,8 +141,9 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/classrooms/$id'
     | '/invites/$token'
-    | '/classrooms/$id/tasks/$taskId'
+    | '/tasks/$taskId'
     | '/classrooms/$id/tasks/new'
+    | '/tasks/$taskId/submissions/$submissionId'
   id:
     | '__root__'
     | '/'
@@ -142,8 +154,9 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/_authenticated/classrooms/$id'
     | '/_authenticated/invites/$token'
-    | '/_authenticated/classrooms/$id/tasks/$taskId'
+    | '/_authenticated/tasks/$taskId'
     | '/_authenticated/classrooms/$id/tasks/new'
+    | '/_authenticated/tasks/$taskId/submissions/$submissionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tasks/$taskId': {
+      id: '/_authenticated/tasks/$taskId'
+      path: '/tasks/$taskId'
+      fullPath: '/tasks/$taskId'
+      preLoaderRoute: typeof AuthenticatedTasksTaskIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/invites/$token': {
       id: '/_authenticated/invites/$token'
       path: '/invites/$token'
@@ -212,6 +232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClassroomsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tasks/$taskId/submissions/$submissionId': {
+      id: '/_authenticated/tasks/$taskId/submissions/$submissionId'
+      path: '/submissions/$submissionId'
+      fullPath: '/tasks/$taskId/submissions/$submissionId'
+      preLoaderRoute: typeof AuthenticatedTasksTaskIdSubmissionsSubmissionIdRouteImport
+      parentRoute: typeof AuthenticatedTasksTaskIdRoute
+    }
     '/_authenticated/classrooms/$id/tasks/new': {
       id: '/_authenticated/classrooms/$id/tasks/new'
       path: '/tasks/new'
@@ -219,25 +246,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClassroomsIdTasksNewRouteImport
       parentRoute: typeof AuthenticatedClassroomsIdRoute
     }
-    '/_authenticated/classrooms/$id/tasks/$taskId': {
-      id: '/_authenticated/classrooms/$id/tasks/$taskId'
-      path: '/tasks/$taskId'
-      fullPath: '/classrooms/$id/tasks/$taskId'
-      preLoaderRoute: typeof AuthenticatedClassroomsIdTasksTaskIdRouteImport
-      parentRoute: typeof AuthenticatedClassroomsIdRoute
-    }
   }
 }
 
 interface AuthenticatedClassroomsIdRouteChildren {
-  AuthenticatedClassroomsIdTasksTaskIdRoute: typeof AuthenticatedClassroomsIdTasksTaskIdRoute
   AuthenticatedClassroomsIdTasksNewRoute: typeof AuthenticatedClassroomsIdTasksNewRoute
 }
 
 const AuthenticatedClassroomsIdRouteChildren: AuthenticatedClassroomsIdRouteChildren =
   {
-    AuthenticatedClassroomsIdTasksTaskIdRoute:
-      AuthenticatedClassroomsIdTasksTaskIdRoute,
     AuthenticatedClassroomsIdTasksNewRoute:
       AuthenticatedClassroomsIdTasksNewRoute,
   }
@@ -247,16 +264,33 @@ const AuthenticatedClassroomsIdRouteWithChildren =
     AuthenticatedClassroomsIdRouteChildren,
   )
 
+interface AuthenticatedTasksTaskIdRouteChildren {
+  AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute: typeof AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute
+}
+
+const AuthenticatedTasksTaskIdRouteChildren: AuthenticatedTasksTaskIdRouteChildren =
+  {
+    AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute:
+      AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute,
+  }
+
+const AuthenticatedTasksTaskIdRouteWithChildren =
+  AuthenticatedTasksTaskIdRoute._addFileChildren(
+    AuthenticatedTasksTaskIdRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedClassroomsIdRoute: typeof AuthenticatedClassroomsIdRouteWithChildren
   AuthenticatedInvitesTokenRoute: typeof AuthenticatedInvitesTokenRoute
+  AuthenticatedTasksTaskIdRoute: typeof AuthenticatedTasksTaskIdRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedClassroomsIdRoute: AuthenticatedClassroomsIdRouteWithChildren,
   AuthenticatedInvitesTokenRoute: AuthenticatedInvitesTokenRoute,
+  AuthenticatedTasksTaskIdRoute: AuthenticatedTasksTaskIdRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -272,3 +306,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

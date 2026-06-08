@@ -44,7 +44,7 @@ function NewTaskPage() {
       }
       const created = await fn({ data: payload });
       toast.success("Tarefa criada");
-      navigate({ to: "/classrooms/$id/tasks/$taskId", params: { id, taskId: created.id } });
+      navigate({ to: "/tasks/$taskId", params: { taskId: created.id } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro");
     } finally { setLoading(false); }
