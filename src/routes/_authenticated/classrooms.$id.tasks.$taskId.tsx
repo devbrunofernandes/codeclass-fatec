@@ -472,7 +472,7 @@ function ReviewPanel({ sub, task, onSaved }: { sub: any; task: any; onSaved: () 
           <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">{source}</pre>
         )}
         {task.type === "quiz" && <QuizReview task={task} answers={answers} />}
-        {task.type === "trivia" && <QuizReview task={task} answers={(answers as number[]).map(a => a)} />}
+        {task.type === "trivia" && <TriviaReview task={task} answers={answers as number[]} />}
         {!source && task.type === "coding" && (
           <pre className="overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(sub.content, null, 2)}</pre>
         )}
