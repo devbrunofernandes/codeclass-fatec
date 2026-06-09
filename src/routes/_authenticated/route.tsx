@@ -67,6 +67,12 @@ function AuthLayout() {
               <span className="hidden items-center gap-2 sm:inline-flex"><LayoutDashboard className="h-4 w-4" />Painel</span>
               <span className="sm:hidden"><LayoutDashboard className="h-4 w-4" /></span>
             </Link>
+            {data.role === "student" && (
+              <Link to="/tasks" className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+                <span className="hidden items-center gap-2 sm:inline-flex"><BookOpen className="h-4 w-4" />Minhas tarefas</span>
+                <span className="sm:hidden"><BookOpen className="h-4 w-4" /></span>
+              </Link>
+            )}
             <div className="relative">
               <button onClick={() => setNotifOpen((v) => !v)} className="relative rounded-md p-2 hover:bg-accent">
                 <Bell className="h-4 w-4" />

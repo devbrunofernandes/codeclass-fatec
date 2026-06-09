@@ -194,3 +194,43 @@ export const myReturnedSubmissions = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+export const myTasksOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: memberships } = await supabase
+      .from("classroom_members").select("classroom_id, role").eq("user_id", userId);
+    const classroomIds = (memberships ?? []).filter(m => m.role === "student").map(m => m.classroom_id);
+    if (classroomIds.length === 0) return [];
+
+    const { data: tasks } = await supabase
+      .from("tasks")
+      .select("*, classroom:classrooms(id,name)")
+      .in("classroom_id", classroomIds)
+      .order("due_at", { ascending: true, nullsFirst: false });
+
+    const taskIds = (tasks ?? []).map(t => t.id);
+    if (taskIds.length === 0) return [];
+
+    const { data: subs } = await supabase
+      .from("submissions")
+      .select("task_id,status,submitted_at,returned_at,grade")
+      .in("task_id", taskIds)
+      .eq("student_id", userId);
+    const subMap = new Map((subs ?? []).map(s => [s.task_id, s]));
+
+    const now = Date.now();
+    return (tasks ?? []).map(t => {
+      const sub = subMap.get(t.id) ?? null;
+      let status: "delivered" | "overdue" | "on_time";
+      if (sub) {
+        status = "delivered";
+      } else if (t.due_at && new Date(t.due_at).getTime() < now) {
+        status = "overdue";
+      } else {
+        status = "on_time";
+      }
+      return { ...t, submission: sub, my_status: status };
+    });
+  });
