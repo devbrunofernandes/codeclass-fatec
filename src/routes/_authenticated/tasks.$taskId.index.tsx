@@ -9,7 +9,7 @@ import { runCode, aiReviewCode } from "@/lib/code.functions";
 import { me } from "@/lib/auth.functions";
 import { Play, Send, Sparkles, ArrowLeft } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/tasks/$taskId")({
+export const Route = createFileRoute("/_authenticated/tasks/$taskId/")({
   head: () => ({ meta: [{ title: "Tarefa — CodeClass" }, { name: "description", content: "Realizar uma tarefa." }] }),
   component: TaskPage,
 });
