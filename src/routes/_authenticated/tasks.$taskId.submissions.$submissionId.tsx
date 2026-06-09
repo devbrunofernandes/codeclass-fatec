@@ -192,6 +192,9 @@ function ReviewPanel({ sub, task, onSaved }: { sub: any; task: any; onSaved: () 
     finally { setAskingAi(false); }
   };
 
+  const isTrivia = task.type === "trivia";
+  const alreadyReturned = sub.status === "returned";
+
   return (
     <div className="space-y-4">
       <div className="rounded-lg border bg-card p-4">
@@ -216,19 +219,32 @@ function ReviewPanel({ sub, task, onSaved }: { sub: any; task: any; onSaved: () 
         </div>
       )}
 
-      <div className="rounded-lg border bg-card p-4 space-y-3">
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium">Nota (0-100, opcional)</span>
-          <input type="number" min={0} max={100} value={grade} onChange={(e) => setGrade(e.target.value)} className="rounded-md border bg-background px-3 py-2 text-sm" />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium">Comentário</span>
-          <textarea required value={feedback} onChange={(e) => setFeedback(e.target.value)} rows={5} className="w-full rounded-md border bg-background px-3 py-2 text-sm" />
-        </label>
-        <button onClick={save} disabled={saving} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
-          {saving ? "Enviando..." : "Enviar devolutiva"}
-        </button>
-      </div>
+      {isTrivia ? (
+        <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+          Tarefas de trivia são corrigidas automaticamente — nota: <strong className="text-foreground">{sub.grade ?? "—"}</strong>/100.
+        </div>
+      ) : alreadyReturned ? (
+        <div className="rounded-lg border bg-card p-4 space-y-2">
+          <div className="text-sm font-medium">Devolutiva já enviada</div>
+          {sub.grade != null && <div className="text-sm">Nota: <strong>{sub.grade}</strong>/100</div>}
+          <p className="whitespace-pre-wrap text-sm text-foreground">{sub.teacher_feedback}</p>
+        </div>
+      ) : (
+        <div className="rounded-lg border bg-card p-4 space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">Nota (0-100, opcional)</span>
+            <input type="number" min={0} max={100} value={grade} onChange={(e) => setGrade(e.target.value)} className="rounded-md border bg-background px-3 py-2 text-sm" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">Comentário</span>
+            <textarea required value={feedback} onChange={(e) => setFeedback(e.target.value)} rows={5} className="w-full rounded-md border bg-background px-3 py-2 text-sm" />
+          </label>
+          <button onClick={save} disabled={saving} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
+            {saving ? "Enviando..." : "Enviar devolutiva"}
+          </button>
+          <p className="text-xs text-muted-foreground">A devolutiva só pode ser enviada uma vez.</p>
+        </div>
+      )}
     </div>
   );
 }

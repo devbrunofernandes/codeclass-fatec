@@ -3,7 +3,7 @@ import { useSuspenseQuery, queryOptions, useQueryClient } from "@tanstack/react-
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { me, setActiveRole } from "@/lib/auth.functions";
-import { Code2, LogOut, LayoutDashboard, Bell, GraduationCap, BookOpen, ArrowLeftRight } from "lucide-react";
+import { Code2, LogOut, LayoutDashboard, Bell, GraduationCap, BookOpen, ArrowLeftRight, ClipboardCheck } from "lucide-react";
 import { listNotifications } from "@/lib/notifications.functions";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -71,6 +71,12 @@ function AuthLayout() {
               <Link to="/tasks" className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
                 <span className="hidden items-center gap-2 sm:inline-flex"><BookOpen className="h-4 w-4" />Minhas tarefas</span>
                 <span className="sm:hidden"><BookOpen className="h-4 w-4" /></span>
+              </Link>
+            )}
+            {data.role === "teacher" && (
+              <Link to="/reviews" className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+                <span className="hidden items-center gap-2 sm:inline-flex"><ClipboardCheck className="h-4 w-4" />Correções</span>
+                <span className="sm:hidden"><ClipboardCheck className="h-4 w-4" /></span>
               </Link>
             )}
             <div className="relative">

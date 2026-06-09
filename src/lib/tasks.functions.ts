@@ -137,9 +137,11 @@ export const returnSubmission = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { data: sub, error: sErr } = await supabase
-      .from("submissions").select("*, task:tasks(id,title,classroom_id)")
+      .from("submissions").select("*, task:tasks(id,title,type,classroom_id)")
       .eq("id", data.submission_id).maybeSingle();
     if (sErr || !sub) throw new Error("Submissão não encontrada");
+    if ((sub.task as any)?.type === "trivia") throw new Error("Tarefas de trivia são corrigidas automaticamente.");
+    if (sub.status === "returned") throw new Error("Esta submissão já foi corrigida.");
 
     const { error } = await supabase.from("submissions").update({
       grade: data.grade, teacher_feedback: data.feedback, status: "returned",
@@ -157,6 +159,45 @@ export const returnSubmission = createServerFn({ method: "POST" })
       link: `/tasks/${sub.task!.id}`,
     });
     return { ok: true };
+  });
+
+export const teacherReviewsOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: memberships } = await supabase
+      .from("classroom_members").select("classroom_id, role").eq("user_id", userId);
+    const classroomIds = (memberships ?? [])
+      .filter(m => m.role === "owner" || m.role === "collaborator")
+      .map(m => m.classroom_id);
+    if (classroomIds.length === 0) return [];
+
+    const { data: tasks } = await supabase
+      .from("tasks")
+      .select("id")
+      .in("classroom_id", classroomIds);
+    const taskIds = (tasks ?? []).map(t => t.id);
+    if (taskIds.length === 0) return [];
+
+    const { data: subs, error } = await supabase
+      .from("submissions")
+      .select("*, task:tasks(id,title,type,classroom_id,classroom:classrooms(id,name))")
+      .in("task_id", taskIds)
+      .order("submitted_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const ids = Array.from(new Set((subs ?? []).map(s => s.student_id)));
+    const { data: profiles } = ids.length
+      ? await supabase.from("profiles").select("id, full_name, username").in("id", ids)
+      : { data: [] as { id: string; full_name: string; username: string }[] };
+    const pMap = new Map((profiles ?? []).map(p => [p.id, p]));
+
+    return (subs ?? []).map(s => {
+      const taskType = (s.task as any)?.type as string;
+      const review_status: "pending" | "corrected" | "auto" =
+        taskType === "trivia" ? "auto" : s.status === "returned" ? "corrected" : "pending";
+      return { ...s, student: pMap.get(s.student_id) ?? null, review_status };
+    });
   });
 
 export const pendingTasksForMe = createServerFn({ method: "GET" })
