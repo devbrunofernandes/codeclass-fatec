@@ -73,6 +73,12 @@ function AuthLayout() {
                 <span className="sm:hidden"><BookOpen className="h-4 w-4" /></span>
               </Link>
             )}
+            {data.role === "teacher" && (
+              <Link to="/reviews" className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+                <span className="hidden items-center gap-2 sm:inline-flex"><ClipboardCheck className="h-4 w-4" />Correções</span>
+                <span className="sm:hidden"><ClipboardCheck className="h-4 w-4" /></span>
+              </Link>
+            )}
             <div className="relative">
               <button onClick={() => setNotifOpen((v) => !v)} className="relative rounded-md p-2 hover:bg-accent">
                 <Bell className="h-4 w-4" />
