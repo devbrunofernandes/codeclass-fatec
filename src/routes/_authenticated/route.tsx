@@ -3,7 +3,7 @@ import { useSuspenseQuery, queryOptions, useQueryClient } from "@tanstack/react-
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { me, setActiveRole } from "@/lib/auth.functions";
-import { Code2, LogOut, LayoutDashboard, Bell, GraduationCap, BookOpen, ArrowLeftRight } from "lucide-react";
+import { Code2, LogOut, LayoutDashboard, Bell, GraduationCap, BookOpen, ArrowLeftRight, ClipboardCheck } from "lucide-react";
 import { listNotifications } from "@/lib/notifications.functions";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
