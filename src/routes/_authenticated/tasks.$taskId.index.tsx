@@ -354,28 +354,46 @@ function TeacherView({ taskId, classroomId }: { taskId: string; classroomId: str
   const fn = useServerFn(listSubmissionsForTask);
   const { data: subs } = useSuspenseQuery({ queryKey: ["submissions", taskId], queryFn: () => fn({ data: { task_id: taskId } }) });
 
+  const corrected = subs.filter(s => s.status === "returned");
+  const pending = subs.filter(s => s.status !== "returned");
+
+  const renderItem = (s: typeof subs[number]) => (
+    <li key={s.id}>
+      <Link
+        to="/tasks/$taskId/submissions/$submissionId"
+        params={{ taskId, submissionId: s.id }}
+        className="flex items-center justify-between p-4 hover:bg-accent"
+      >
+        <div>
+          <div className="font-medium text-foreground">{s.student?.full_name}</div>
+          <div className="text-xs text-muted-foreground">
+            {new Date(s.submitted_at).toLocaleString("pt-BR")} · {s.status === "returned" ? `Nota ${s.grade ?? "—"}` : "pendente"}
+          </div>
+        </div>
+        <span className="text-xs text-primary">{s.status === "returned" ? "Ver correção →" : "Abrir correção →"}</span>
+      </Link>
+    </li>
+  );
+
   return (
-    <div className="rounded-lg border bg-card">
-      <div className="border-b p-3 text-sm font-medium">Submissões ({subs.length})</div>
-      <ul className="divide-y">
-        {subs.length === 0 && <li className="p-4 text-sm text-muted-foreground">Nenhuma submissão ainda.</li>}
-        {subs.map(s => (
-          <li key={s.id}>
-            <Link
-              to="/tasks/$taskId/submissions/$submissionId"
-              params={{ taskId, submissionId: s.id }}
-              className="flex items-center justify-between p-4 hover:bg-accent"
-            >
-              <div>
-                <div className="font-medium text-foreground">{s.student?.full_name}</div>
-                <div className="text-xs text-muted-foreground">{new Date(s.submitted_at).toLocaleString("pt-BR")} · {s.status === "returned" ? `Nota ${s.grade ?? "—"}` : "pendente"}</div>
-              </div>
-              <span className="text-xs text-primary">Abrir correção →</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <div className="border-t p-3">
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-card">
+        <div className="border-b p-3 text-sm font-medium">Pendentes de correção ({pending.length})</div>
+        <ul className="divide-y">
+          {pending.length === 0
+            ? <li className="p-4 text-sm text-muted-foreground">Nenhuma submissão pendente.</li>
+            : pending.map(renderItem)}
+        </ul>
+      </div>
+      <div className="rounded-lg border bg-card">
+        <div className="border-b p-3 text-sm font-medium">Corrigidas ({corrected.length})</div>
+        <ul className="divide-y">
+          {corrected.length === 0
+            ? <li className="p-4 text-sm text-muted-foreground">Nenhuma submissão corrigida ainda.</li>
+            : corrected.map(renderItem)}
+        </ul>
+      </div>
+      <div>
         <Link to="/classrooms/$id" params={{ id: classroomId }} className="text-sm text-muted-foreground hover:text-foreground">← Voltar para a sala</Link>
       </div>
     </div>
