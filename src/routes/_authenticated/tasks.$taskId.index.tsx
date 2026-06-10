@@ -106,14 +106,14 @@ function CodingRunner({ task, mySub }: { task: any; mySub: any }) {
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <select value={lang} onChange={(e) => setLang(e.target.value)} disabled={mySub?.status === "returned"} className="rounded-md border bg-background px-3 py-2 text-sm">
+          <select value={lang} onChange={(e) => setLang(e.target.value)} disabled={!!mySub} className="rounded-md border bg-background px-3 py-2 text-sm">
             {allowed.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
           <button type="button" onClick={run} disabled={running} className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm hover:bg-accent disabled:opacity-60">
             <Play className="h-4 w-4" /> {running ? "Executando..." : "Executar"}
           </button>
-          <button type="button" onClick={submit} disabled={submitting || mySub?.status === "returned"} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
-            <Send className="h-4 w-4" /> {submitting ? "Enviando..." : "Enviar"}
+          <button type="button" onClick={submit} disabled={submitting || !!mySub} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
+            <Send className="h-4 w-4" /> {submitting ? "Enviando..." : mySub ? "Enviada" : "Enviar"}
           </button>
         </div>
         <div className="overflow-hidden rounded-lg border" onPaste={onPaste}>
@@ -123,7 +123,7 @@ function CodingRunner({ task, mySub }: { task: any; mySub: any }) {
             language={monacoLang}
             value={code}
             onChange={(v) => setCode(v ?? "")}
-            options={{ minimap: { enabled: false }, fontSize: 14, readOnly: mySub?.status === "returned" }}
+            options={{ minimap: { enabled: false }, fontSize: 14, readOnly: !!mySub }}
           />
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
