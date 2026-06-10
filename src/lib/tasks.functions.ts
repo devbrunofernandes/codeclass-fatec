@@ -117,19 +117,13 @@ export const submitTask = createServerFn({ method: "POST" })
     }
     const { data: existing } = await supabase.from("submissions").select("id,status").eq("task_id", data.task_id).eq("student_id", userId).maybeSingle();
     if (existing) {
-      if (existing.status === "returned") throw new Error("Tarefa já corrigida.");
-      const { data: up, error } = await supabase.from("submissions").update({
-        content: data.content, language: data.language, submitted_at: new Date().toISOString(), ...extra,
-      }).eq("id", existing.id).select().single();
-      if (error) throw new Error(error.message);
-      return up;
-    } else {
-      const { data: ins, error } = await supabase.from("submissions").insert({
-        task_id: data.task_id, student_id: userId, content: data.content, language: data.language, ...extra,
-      }).select().single();
-      if (error) throw new Error(error.message);
-      return ins;
+      throw new Error("Esta tarefa já foi enviada e não pode ser reenviada.");
     }
+    const { data: ins, error } = await supabase.from("submissions").insert({
+      task_id: data.task_id, student_id: userId, content: data.content, language: data.language, ...extra,
+    }).select().single();
+    if (error) throw new Error(error.message);
+    return ins;
   });
 
 const ReturnInput = z.object({
