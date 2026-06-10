@@ -106,14 +106,14 @@ function CodingRunner({ task, mySub }: { task: any; mySub: any }) {
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <select value={lang} onChange={(e) => setLang(e.target.value)} disabled={mySub?.status === "returned"} className="rounded-md border bg-background px-3 py-2 text-sm">
+          <select value={lang} onChange={(e) => setLang(e.target.value)} disabled={!!mySub} className="rounded-md border bg-background px-3 py-2 text-sm">
             {allowed.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
           <button type="button" onClick={run} disabled={running} className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm hover:bg-accent disabled:opacity-60">
             <Play className="h-4 w-4" /> {running ? "Executando..." : "Executar"}
           </button>
-          <button type="button" onClick={submit} disabled={submitting || mySub?.status === "returned"} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
-            <Send className="h-4 w-4" /> {submitting ? "Enviando..." : "Enviar"}
+          <button type="button" onClick={submit} disabled={submitting || !!mySub} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
+            <Send className="h-4 w-4" /> {submitting ? "Enviando..." : mySub ? "Enviada" : "Enviar"}
           </button>
         </div>
         <div className="overflow-hidden rounded-lg border" onPaste={onPaste}>
@@ -123,7 +123,7 @@ function CodingRunner({ task, mySub }: { task: any; mySub: any }) {
             language={monacoLang}
             value={code}
             onChange={(v) => setCode(v ?? "")}
-            options={{ minimap: { enabled: false }, fontSize: 14, readOnly: mySub?.status === "returned" }}
+            options={{ minimap: { enabled: false }, fontSize: 14, readOnly: !!mySub }}
           />
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -354,28 +354,46 @@ function TeacherView({ taskId, classroomId }: { taskId: string; classroomId: str
   const fn = useServerFn(listSubmissionsForTask);
   const { data: subs } = useSuspenseQuery({ queryKey: ["submissions", taskId], queryFn: () => fn({ data: { task_id: taskId } }) });
 
+  const corrected = subs.filter(s => s.status === "returned");
+  const pending = subs.filter(s => s.status !== "returned");
+
+  const renderItem = (s: typeof subs[number]) => (
+    <li key={s.id}>
+      <Link
+        to="/tasks/$taskId/submissions/$submissionId"
+        params={{ taskId, submissionId: s.id }}
+        className="flex items-center justify-between p-4 hover:bg-accent"
+      >
+        <div>
+          <div className="font-medium text-foreground">{s.student?.full_name}</div>
+          <div className="text-xs text-muted-foreground">
+            {new Date(s.submitted_at).toLocaleString("pt-BR")} · {s.status === "returned" ? `Nota ${s.grade ?? "—"}` : "pendente"}
+          </div>
+        </div>
+        <span className="text-xs text-primary">{s.status === "returned" ? "Ver correção →" : "Abrir correção →"}</span>
+      </Link>
+    </li>
+  );
+
   return (
-    <div className="rounded-lg border bg-card">
-      <div className="border-b p-3 text-sm font-medium">Submissões ({subs.length})</div>
-      <ul className="divide-y">
-        {subs.length === 0 && <li className="p-4 text-sm text-muted-foreground">Nenhuma submissão ainda.</li>}
-        {subs.map(s => (
-          <li key={s.id}>
-            <Link
-              to="/tasks/$taskId/submissions/$submissionId"
-              params={{ taskId, submissionId: s.id }}
-              className="flex items-center justify-between p-4 hover:bg-accent"
-            >
-              <div>
-                <div className="font-medium text-foreground">{s.student?.full_name}</div>
-                <div className="text-xs text-muted-foreground">{new Date(s.submitted_at).toLocaleString("pt-BR")} · {s.status === "returned" ? `Nota ${s.grade ?? "—"}` : "pendente"}</div>
-              </div>
-              <span className="text-xs text-primary">Abrir correção →</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <div className="border-t p-3">
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-card">
+        <div className="border-b p-3 text-sm font-medium">Pendentes de correção ({pending.length})</div>
+        <ul className="divide-y">
+          {pending.length === 0
+            ? <li className="p-4 text-sm text-muted-foreground">Nenhuma submissão pendente.</li>
+            : pending.map(renderItem)}
+        </ul>
+      </div>
+      <div className="rounded-lg border bg-card">
+        <div className="border-b p-3 text-sm font-medium">Corrigidas ({corrected.length})</div>
+        <ul className="divide-y">
+          {corrected.length === 0
+            ? <li className="p-4 text-sm text-muted-foreground">Nenhuma submissão corrigida ainda.</li>
+            : corrected.map(renderItem)}
+        </ul>
+      </div>
+      <div>
         <Link to="/classrooms/$id" params={{ id: classroomId }} className="text-sm text-muted-foreground hover:text-foreground">← Voltar para a sala</Link>
       </div>
     </div>

@@ -79,8 +79,35 @@ function TasksTab({ classroomId, isTeacher }: { classroomId: string; isTeacher: 
   const fn = useServerFn(listTasks);
   const { data: tasks } = useSuspenseQuery({ queryKey: ["tasks", classroomId], queryFn: () => fn({ data: { classroom_id: classroomId } }) });
 
+  const renderItem = (t: typeof tasks[number]) => {
+    const sub = (t as any).my_submission as { status: string; grade: number | null } | null;
+    const delivered = !!sub;
+    return (
+      <Link key={t.id} to="/tasks/$taskId" params={{ taskId: t.id }}
+        className="block rounded-lg border bg-card p-4 hover:border-primary/40">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-xs uppercase text-muted-foreground">{t.type === "coding" ? "Codificação" : t.type === "trivia" ? "Trivia" : "Questionário"}</div>
+            <div className="truncate font-medium text-foreground">{t.title}</div>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {!isTeacher && delivered && (
+              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-medium text-emerald-700 dark:text-emerald-400">
+                {sub!.status === "returned" ? `Corrigida${sub!.grade != null ? ` · ${sub!.grade}` : ""}` : "Entregue"}
+              </span>
+            )}
+            <span>{t.due_at ? `Entrega: ${new Date(t.due_at).toLocaleString("pt-BR")}` : "Sem prazo"}</span>
+          </div>
+        </div>
+      </Link>
+    );
+  };
+
+  const pending = isTeacher ? [] : tasks.filter(t => !(t as any).my_submission);
+  const delivered = isTeacher ? [] : tasks.filter(t => !!(t as any).my_submission);
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {isTeacher && (
         <Link to="/classrooms/$id/tasks/new" params={{ id: classroomId }}
           className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
@@ -89,21 +116,23 @@ function TasksTab({ classroomId, isTeacher }: { classroomId: string; isTeacher: 
       )}
       {tasks.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">Nenhuma tarefa ainda.</div>
+      ) : isTeacher ? (
+        <div className="space-y-3">{tasks.map(renderItem)}</div>
       ) : (
-        tasks.map(t => (
-          <Link key={t.id} to="/tasks/$taskId" params={{ taskId: t.id }}
-            className="block rounded-lg border bg-card p-4 hover:border-primary/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs uppercase text-muted-foreground">{t.type === "coding" ? "Codificação" : t.type === "trivia" ? "Trivia" : "Questionário"}</div>
-                <div className="font-medium text-foreground">{t.title}</div>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {t.due_at ? `Entrega: ${new Date(t.due_at).toLocaleString("pt-BR")}` : "Sem prazo"}
-              </div>
-            </div>
-          </Link>
-        ))
+        <div className="space-y-6">
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold text-foreground">Pendentes ({pending.length})</h2>
+            {pending.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">Nenhuma tarefa pendente.</div>
+            ) : <div className="space-y-3">{pending.map(renderItem)}</div>}
+          </section>
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold text-foreground">Enviadas ({delivered.length})</h2>
+            {delivered.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">Você ainda não enviou nenhuma tarefa.</div>
+            ) : <div className="space-y-3">{delivered.map(renderItem)}</div>}
+          </section>
+        </div>
       )}
     </div>
   );
