@@ -17,12 +17,12 @@ import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedTasksIndexRouteImport } from './routes/_authenticated/tasks.index'
 import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
+import { Route as AuthenticatedTasksNewRouteImport } from './routes/_authenticated/tasks.new'
 import { Route as AuthenticatedTasksTaskIdRouteImport } from './routes/_authenticated/tasks.$taskId'
 import { Route as AuthenticatedInvitesTokenRouteImport } from './routes/_authenticated/invites.$token'
 import { Route as AuthenticatedClassroomsIdRouteImport } from './routes/_authenticated/classrooms.$id'
 import { Route as AuthenticatedTasksTaskIdIndexRouteImport } from './routes/_authenticated/tasks.$taskId.index'
 import { Route as AuthenticatedTasksTaskIdSubmissionsSubmissionIdRouteImport } from './routes/_authenticated/tasks.$taskId.submissions.$submissionId'
-import { Route as AuthenticatedClassroomsIdTasksNewRouteImport } from './routes/_authenticated/classrooms.$id.tasks.new'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -64,6 +64,11 @@ const AuthenticatedReviewsIndexRoute =
     path: '/reviews/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTasksNewRoute = AuthenticatedTasksNewRouteImport.update({
+  id: '/tasks/new',
+  path: '/tasks/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTasksTaskIdRoute =
   AuthenticatedTasksTaskIdRouteImport.update({
     id: '/tasks/$taskId',
@@ -94,12 +99,6 @@ const AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute =
     path: '/submissions/$submissionId',
     getParentRoute: () => AuthenticatedTasksTaskIdRoute,
   } as any)
-const AuthenticatedClassroomsIdTasksNewRoute =
-  AuthenticatedClassroomsIdTasksNewRouteImport.update({
-    id: '/tasks/new',
-    path: '/tasks/new',
-    getParentRoute: () => AuthenticatedClassroomsIdRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -107,13 +106,13 @@ export interface FileRoutesByFullPath {
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/sign-up': typeof AuthSignUpRoute
-  '/classrooms/$id': typeof AuthenticatedClassroomsIdRouteWithChildren
+  '/classrooms/$id': typeof AuthenticatedClassroomsIdRoute
   '/invites/$token': typeof AuthenticatedInvitesTokenRoute
   '/tasks/$taskId': typeof AuthenticatedTasksTaskIdRouteWithChildren
+  '/tasks/new': typeof AuthenticatedTasksNewRoute
   '/reviews/': typeof AuthenticatedReviewsIndexRoute
   '/tasks/': typeof AuthenticatedTasksIndexRoute
   '/tasks/$taskId/': typeof AuthenticatedTasksTaskIdIndexRoute
-  '/classrooms/$id/tasks/new': typeof AuthenticatedClassroomsIdTasksNewRoute
   '/tasks/$taskId/submissions/$submissionId': typeof AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute
 }
 export interface FileRoutesByTo {
@@ -122,12 +121,12 @@ export interface FileRoutesByTo {
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/sign-up': typeof AuthSignUpRoute
-  '/classrooms/$id': typeof AuthenticatedClassroomsIdRouteWithChildren
+  '/classrooms/$id': typeof AuthenticatedClassroomsIdRoute
   '/invites/$token': typeof AuthenticatedInvitesTokenRoute
+  '/tasks/new': typeof AuthenticatedTasksNewRoute
   '/reviews': typeof AuthenticatedReviewsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/tasks/$taskId': typeof AuthenticatedTasksTaskIdIndexRoute
-  '/classrooms/$id/tasks/new': typeof AuthenticatedClassroomsIdTasksNewRoute
   '/tasks/$taskId/submissions/$submissionId': typeof AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute
 }
 export interface FileRoutesById {
@@ -138,13 +137,13 @@ export interface FileRoutesById {
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/sign-up': typeof AuthSignUpRoute
-  '/_authenticated/classrooms/$id': typeof AuthenticatedClassroomsIdRouteWithChildren
+  '/_authenticated/classrooms/$id': typeof AuthenticatedClassroomsIdRoute
   '/_authenticated/invites/$token': typeof AuthenticatedInvitesTokenRoute
   '/_authenticated/tasks/$taskId': typeof AuthenticatedTasksTaskIdRouteWithChildren
+  '/_authenticated/tasks/new': typeof AuthenticatedTasksNewRoute
   '/_authenticated/reviews/': typeof AuthenticatedReviewsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
   '/_authenticated/tasks/$taskId/': typeof AuthenticatedTasksTaskIdIndexRoute
-  '/_authenticated/classrooms/$id/tasks/new': typeof AuthenticatedClassroomsIdTasksNewRoute
   '/_authenticated/tasks/$taskId/submissions/$submissionId': typeof AuthenticatedTasksTaskIdSubmissionsSubmissionIdRoute
 }
 export interface FileRouteTypes {
@@ -158,10 +157,10 @@ export interface FileRouteTypes {
     | '/classrooms/$id'
     | '/invites/$token'
     | '/tasks/$taskId'
+    | '/tasks/new'
     | '/reviews/'
     | '/tasks/'
     | '/tasks/$taskId/'
-    | '/classrooms/$id/tasks/new'
     | '/tasks/$taskId/submissions/$submissionId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -172,10 +171,10 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/classrooms/$id'
     | '/invites/$token'
+    | '/tasks/new'
     | '/reviews'
     | '/tasks'
     | '/tasks/$taskId'
-    | '/classrooms/$id/tasks/new'
     | '/tasks/$taskId/submissions/$submissionId'
   id:
     | '__root__'
@@ -188,10 +187,10 @@ export interface FileRouteTypes {
     | '/_authenticated/classrooms/$id'
     | '/_authenticated/invites/$token'
     | '/_authenticated/tasks/$taskId'
+    | '/_authenticated/tasks/new'
     | '/_authenticated/reviews/'
     | '/_authenticated/tasks/'
     | '/_authenticated/tasks/$taskId/'
-    | '/_authenticated/classrooms/$id/tasks/new'
     | '/_authenticated/tasks/$taskId/submissions/$submissionId'
   fileRoutesById: FileRoutesById
 }
@@ -261,6 +260,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReviewsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tasks/new': {
+      id: '/_authenticated/tasks/new'
+      path: '/tasks/new'
+      fullPath: '/tasks/new'
+      preLoaderRoute: typeof AuthenticatedTasksNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tasks/$taskId': {
       id: '/_authenticated/tasks/$taskId'
       path: '/tasks/$taskId'
@@ -296,30 +302,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTasksTaskIdSubmissionsSubmissionIdRouteImport
       parentRoute: typeof AuthenticatedTasksTaskIdRoute
     }
-    '/_authenticated/classrooms/$id/tasks/new': {
-      id: '/_authenticated/classrooms/$id/tasks/new'
-      path: '/tasks/new'
-      fullPath: '/classrooms/$id/tasks/new'
-      preLoaderRoute: typeof AuthenticatedClassroomsIdTasksNewRouteImport
-      parentRoute: typeof AuthenticatedClassroomsIdRoute
-    }
   }
 }
-
-interface AuthenticatedClassroomsIdRouteChildren {
-  AuthenticatedClassroomsIdTasksNewRoute: typeof AuthenticatedClassroomsIdTasksNewRoute
-}
-
-const AuthenticatedClassroomsIdRouteChildren: AuthenticatedClassroomsIdRouteChildren =
-  {
-    AuthenticatedClassroomsIdTasksNewRoute:
-      AuthenticatedClassroomsIdTasksNewRoute,
-  }
-
-const AuthenticatedClassroomsIdRouteWithChildren =
-  AuthenticatedClassroomsIdRoute._addFileChildren(
-    AuthenticatedClassroomsIdRouteChildren,
-  )
 
 interface AuthenticatedTasksTaskIdRouteChildren {
   AuthenticatedTasksTaskIdIndexRoute: typeof AuthenticatedTasksTaskIdIndexRoute
@@ -340,18 +324,20 @@ const AuthenticatedTasksTaskIdRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedClassroomsIdRoute: typeof AuthenticatedClassroomsIdRouteWithChildren
+  AuthenticatedClassroomsIdRoute: typeof AuthenticatedClassroomsIdRoute
   AuthenticatedInvitesTokenRoute: typeof AuthenticatedInvitesTokenRoute
   AuthenticatedTasksTaskIdRoute: typeof AuthenticatedTasksTaskIdRouteWithChildren
+  AuthenticatedTasksNewRoute: typeof AuthenticatedTasksNewRoute
   AuthenticatedReviewsIndexRoute: typeof AuthenticatedReviewsIndexRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedClassroomsIdRoute: AuthenticatedClassroomsIdRouteWithChildren,
+  AuthenticatedClassroomsIdRoute: AuthenticatedClassroomsIdRoute,
   AuthenticatedInvitesTokenRoute: AuthenticatedInvitesTokenRoute,
   AuthenticatedTasksTaskIdRoute: AuthenticatedTasksTaskIdRouteWithChildren,
+  AuthenticatedTasksNewRoute: AuthenticatedTasksNewRoute,
   AuthenticatedReviewsIndexRoute: AuthenticatedReviewsIndexRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
 }
@@ -369,3 +355,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

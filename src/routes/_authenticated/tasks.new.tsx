@@ -2,10 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { createTask } from "@/lib/tasks.functions";
 import { Plus, Trash2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/classrooms/$id/tasks/new")({
+export const Route = createFileRoute("/_authenticated/tasks/new")({
+  validateSearch: z.object({ classroomId: z.string().uuid() }),
   head: () => ({ meta: [{ title: "Nova tarefa — CodeClass" }, { name: "description", content: "Criar uma nova tarefa para a turma." }] }),
   component: NewTaskPage,
 });
@@ -13,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/classrooms/$id/tasks/new")
 const LANGS = ["javascript", "python", "java", "c", "cpp"] as const;
 
 function NewTaskPage() {
-  const { id } = Route.useParams();
+  const { classroomId } = Route.useSearch();
   const navigate = useNavigate();
   const fn = useServerFn(createTask);
   const [type, setType] = useState<"coding" | "trivia" | "quiz">("coding");
@@ -36,11 +38,11 @@ function NewTaskPage() {
     try {
       let payload;
       if (type === "coding") {
-        payload = { type: "coding" as const, classroom_id: id, title, statement, due_at: dueAt ? new Date(dueAt).toISOString() : null, config: { starter_code: starter, allowed_languages: allowedLangs as ("javascript"|"python"|"java"|"c"|"cpp")[] } };
+        payload = { type: "coding" as const, classroom_id: classroomId, title, statement, due_at: dueAt ? new Date(dueAt).toISOString() : null, config: { starter_code: starter, allowed_languages: allowedLangs as ("javascript"|"python"|"java"|"c"|"cpp")[] } };
       } else if (type === "trivia") {
-        payload = { type: "trivia" as const, classroom_id: id, title, statement, due_at: dueAt ? new Date(dueAt).toISOString() : null, config: { questions: trivia } };
+        payload = { type: "trivia" as const, classroom_id: classroomId, title, statement, due_at: dueAt ? new Date(dueAt).toISOString() : null, config: { questions: trivia } };
       } else {
-        payload = { type: "quiz" as const, classroom_id: id, title, statement, due_at: dueAt ? new Date(dueAt).toISOString() : null, config: { questions: quiz } };
+        payload = { type: "quiz" as const, classroom_id: classroomId, title, statement, due_at: dueAt ? new Date(dueAt).toISOString() : null, config: { questions: quiz } };
       }
       const created = await fn({ data: payload });
       toast.success("Tarefa criada");
@@ -139,7 +141,7 @@ function NewTaskPage() {
       )}
 
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={() => navigate({ to: "/classrooms/$id", params: { id } })} className="rounded-md border px-4 py-2 text-sm hover:bg-accent">Cancelar</button>
+        <button type="button" onClick={() => navigate({ to: "/classrooms/$id", params: { id: classroomId } })} className="rounded-md border px-4 py-2 text-sm hover:bg-accent">Cancelar</button>
         <button disabled={loading} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
           {loading ? "Criando..." : "Criar tarefa"}
         </button>
