@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { createTask } from "@/lib/tasks.functions";
 import { Plus, Trash2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/classrooms/$id/tasks/new")({
+export const Route = createFileRoute("/_authenticated/classrooms/$id/new-task")({
   head: () => ({ meta: [{ title: "Nova tarefa — CodeClass" }, { name: "description", content: "Criar uma nova tarefa para a turma." }] }),
   component: NewTaskPage,
 });
