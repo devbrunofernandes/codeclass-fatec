@@ -51,10 +51,17 @@ export const listTasks = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ classroom_id: z.string().uuid() }).parse(i))
   .handler(async ({ context, data }) => {
-    const { data: rows, error } = await context.supabase
+    const { supabase, userId } = context;
+    const { data: rows, error } = await supabase
       .from("tasks").select("*").eq("classroom_id", data.classroom_id).order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    const tasks = rows ?? [];
+    const ids = tasks.map(t => t.id);
+    if (ids.length === 0) return tasks.map(t => ({ ...t, my_submission: null as null | { status: string; grade: number | null } }));
+    const { data: subs } = await supabase
+      .from("submissions").select("task_id,status,grade").in("task_id", ids).eq("student_id", userId);
+    const sMap = new Map((subs ?? []).map(s => [s.task_id, s]));
+    return tasks.map(t => ({ ...t, my_submission: sMap.get(t.id) ?? null }));
   });
 
 export const getTask = createServerFn({ method: "POST" })
